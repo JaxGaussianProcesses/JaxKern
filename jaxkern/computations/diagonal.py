@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable, Dict
-
 from jax import vmap
 from jaxlinop import (
     DiagonalLinearOperator,
@@ -24,17 +22,9 @@ from .base import AbstractKernelComputation
 
 
 class DiagonalKernelComputation(AbstractKernelComputation):
-    def __init__(
-        self,
-        kernel_fn: Callable[
-            [Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array
-        ] = None,
-    ) -> None:
-        super().__init__(kernel_fn)
 
     def gram(
         self,
-        params: Dict,
         inputs: Float[Array, "N D"],
     ) -> DiagonalLinearOperator:
         """For a kernel with diagonal structure, compute the NxN gram matrix on
@@ -50,12 +40,12 @@ class DiagonalKernelComputation(AbstractKernelComputation):
             CovarianceOperator: The computed square Gram matrix.
         """
 
-        diag = vmap(lambda x: self.kernel_fn(params, x, x))(inputs)
+        diag = vmap(lambda x: self.kernel_fn(x, x))(inputs)
 
         return DiagonalLinearOperator(diag=diag)
 
     def cross_covariance(
-        self, params: Dict, x: Float[Array, "N D"], y: Float[Array, "M D"]
+        self, x: Float[Array, "N D"], y: Float[Array, "M D"]
     ) -> Float[Array, "N M"]:
         """For a given kernel, compute the NxM covariance matrix on a pair of input
         matrices of shape NxD and MxD.
@@ -71,5 +61,5 @@ class DiagonalKernelComputation(AbstractKernelComputation):
             CovarianceOperator: The computed square Gram matrix.
         """
         # TODO: This is currently a dense implementation. We should implement a sparse LinearOperator for non-square cross-covariance matrices.
-        cross_cov = vmap(lambda x: vmap(lambda y: self.kernel_fn(params, x, y))(y))(x)
+        cross_cov = vmap(lambda x: vmap(lambda y: self.kernel_fn(x, y))(y))(x)
         return cross_cov

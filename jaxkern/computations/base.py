@@ -23,58 +23,33 @@ from jaxlinop import (
     LinearOperator,
 )
 from jaxtyping import Array, Float
-from jaxutils import PyTree
 
+import equinox as eqx
 
-class AbstractKernelComputation(PyTree):
+class AbstractKernelComputation(eqx.Module):
     """Abstract class for kernel computations."""
+    kernel_fn: Callable[[Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array] = eqx.static_field()
 
-    def __init__(
-        self,
-        kernel_fn: Callable[
-            [Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array
-        ] = None,
-    ) -> None:
-        self._kernel_fn = kernel_fn
+    def __init__(self, kernel_fn: Callable[[Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array]) -> None:
+        self.kernel_fn = kernel_fn
 
-    @property
-    def kernel_fn(
-        self,
-    ) -> Callable[[Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array]:
-        return self._kernel_fn
-
-    @kernel_fn.setter
-    def kernel_fn(
-        self,
-        kernel_fn: Callable[[Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array],
-    ) -> None:
-        self._kernel_fn = kernel_fn
-
-    def gram(
-        self,
-        params: Dict,
-        inputs: Float[Array, "N D"],
-    ) -> LinearOperator:
+    def gram(self, inputs: Float[Array, "N D"]) -> LinearOperator:
 
         """Compute Gram covariance operator of the kernel function.
 
         Args:
             kernel (AbstractKernel): The kernel function to be evaluated.
-            params (Dict): The parameters of the kernel function.
             inputs (Float[Array, "N N"]): The inputs to the kernel function.
 
         Returns:
             LinearOperator: Gram covariance operator of the kernel function.
         """
 
-        matrix = self.cross_covariance(params, inputs, inputs)
-
-        return DenseLinearOperator(matrix=matrix)
+        return DenseLinearOperator(matrix=self.cross_covariance(inputs, inputs))
 
     @abc.abstractmethod
     def cross_covariance(
         self,
-        params: Dict,
         x: Float[Array, "N D"],
         y: Float[Array, "M D"],
     ) -> Float[Array, "N M"]:
@@ -84,7 +59,6 @@ class AbstractKernelComputation(PyTree):
         Args:
             kernel (AbstractKernel): The kernel for which the cross-covariance
                 matrix should be computed for.
-            params (Dict): The kernel's parameter set.
             x (Float[Array,"N D"]): The first input matrix.
             y (Float[Array,"M D"]): The second input matrix.
 
@@ -95,7 +69,6 @@ class AbstractKernelComputation(PyTree):
 
     def diagonal(
         self,
-        params: Dict,
         inputs: Float[Array, "N D"],
     ) -> DiagonalLinearOperator:
         """For a given kernel, compute the elementwise diagonal of the
@@ -104,12 +77,9 @@ class AbstractKernelComputation(PyTree):
         Args:
             kernel (AbstractKernel): The kernel for which the variance
                 vector should be computed for.
-            params (Dict): The kernel's parameter set.
             inputs (Float[Array, "N D"]): The input matrix.
 
         Returns:
             LinearOperator: The computed diagonal variance entries.
         """
-        diag = vmap(lambda x: self._kernel_fn(params, x, x))(inputs)
-
-        return DiagonalLinearOperator(diag=diag)
+        return DiagonalLinearOperator(diag=vmap(lambda x: self.kernel_fn(x, x))(inputs))

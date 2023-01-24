@@ -13,56 +13,68 @@
 # limitations under the License.
 # ==============================================================================
 
-import abc
-from typing import Callable, Dict, List, Optional, Sequence
+from __future__ import annotations
 
-import deprecation
+import abc
+from typing import Callable, List, Optional, Sequence
+
 import jax.numpy as jnp
-import jax.random
-import jax
-from jax.random import KeyArray
 from jaxtyping import Array, Float
-from jaxutils import PyTree
 
 from .computations import AbstractKernelComputation, DenseKernelComputation
 
+import equinox as eqx
 
-##########################################
-# Abtract classes
-##########################################
-class AbstractKernel(PyTree):
-    """
-    Base kernel class"""
+
+class AbstractKernel(eqx.Module):
+    """Base kernel class."""
+
+    active_dims: List[int] = eqx.static_field()
+    compute_engine: AbstractKernelComputation = eqx.static_field()
+    name: str = eqx.static_field()
+
 
     def __init__(
         self,
         compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
-        stationary: Optional[bool] = False,
-        spectral: Optional[bool] = False,
-        name: Optional[str] = "AbstractKernel",
+        name: Optional[str] = "Kernel",
     ) -> None:
+
         self.compute_engine = compute_engine
         self.active_dims = active_dims
-        self.stationary = stationary
-        self.spectral = spectral
         self.name = name
-        self.ndims = 1 if not self.active_dims else len(self.active_dims)
-        compute_engine = self.compute_engine(kernel_fn=self.__call__)
-        self.gram = compute_engine.gram
-        self.cross_covariance = compute_engine.cross_covariance
+    
+    @property
+    def ndims(self):
+        return 1 if not self.active_dims else len(self.active_dims)
+
+    @property 
+    def gram(self):
+        return self.compute_engine(kernel_fn=self.__call__).gram
+    
+    @property
+    def cross_covariance(self):
+        return self.compute_engine(kernel_fn=self.__call__).cross_covariance
+
+    @property
+    def stationary(self) -> bool:
+        raise NotImplementedError
+    
+    @property
+    def spectral(self) -> bool:
+        raise NotImplementedError
+
 
     @abc.abstractmethod
     def __call__(
         self,
-        params: Dict,
         x: Float[Array, "1 D"],
         y: Float[Array, "1 D"],
     ) -> Float[Array, "1"]:
         """Evaluate the kernel on a pair of inputs.
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
             x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
             y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
 
@@ -81,7 +93,7 @@ class AbstractKernel(PyTree):
         """
         return x[..., self.active_dims]
 
-    def __add__(self, other: "AbstractKernel") -> "AbstractKernel":
+    def __add__(self, other: AbstractKernel) -> AbstractKernel:
         """Add two kernels together.
         Args:
             other (AbstractKernel): The kernel to be added to the current kernel.
@@ -91,7 +103,7 @@ class AbstractKernel(PyTree):
         """
         return SumKernel(kernel_set=[self, other])
 
-    def __mul__(self, other: "AbstractKernel") -> "AbstractKernel":
+    def __mul__(self, other: AbstractKernel) -> AbstractKernel:
         """Multiply two kernels together.
 
         Args:
@@ -112,57 +124,38 @@ class AbstractKernel(PyTree):
         """
         return True if self.ndims > 1 else False
 
-    @abc.abstractmethod
-    def init_params(self, key: KeyArray) -> Dict:
-        """A template dictionary of the kernel's parameter set.
-
-        Args:
-            key (KeyArray): A PRNG key to be used for initialising
-                the kernel's parameters.
-
-        Returns:
-            Dict: A dictionary of the kernel's parameters.
-        """
-        raise NotImplementedError
-
-    @deprecation.deprecated(
-        deprecated_in="0.0.3",
-        removed_in="0.1.0",
-    )
-    def _initialise_params(self, key: KeyArray) -> Dict:
-        """A template dictionary of the kernel's parameter set.
-
-        Args:
-            key (KeyArray): A PRNG key to be used for initialising
-                the kernel's parameters.
-
-        Returns:
-            Dict: A dictionary of the kernel's parameters.
-        """
-        raise NotImplementedError
 
 
 class CombinationKernel(AbstractKernel):
     """A base class for products or sums of kernels."""
+    kernel_set: List[AbstractKernel] = eqx.static_field()
+    combination_fn: Callable = eqx.static_field()
 
     def __init__(
         self,
         kernel_set: List[AbstractKernel],
         compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
-        stationary: Optional[bool] = False,
-        spectral: Optional[bool] = False,
-        name: Optional[str] = "AbstractKernel",
+        name: Optional[str] = "Combination kernel",
     ) -> None:
-        super().__init__(compute_engine, active_dims, stationary, spectral, name)
+
+        super().__init__(
+            compute_engine=compute_engine, 
+            active_dims = active_dims, 
+            name = name,
+            )
+
         self.kernel_set = kernel_set
-        name: Optional[str] = "Combination kernel"
-        self.combination_fn: Optional[Callable] = None
 
         if not all(isinstance(k, AbstractKernel) for k in self.kernel_set):
             raise TypeError("can only combine Kernel instances")  # pragma: no cover
 
         self._set_kernels(self.kernel_set)
+
+    @property
+    @abc.abstractmethod
+    def combination_fn(self):
+        raise NotImplementedError
 
     def _set_kernels(self, kernels: Sequence[AbstractKernel]) -> None:
         """Combine multiple kernels. Based on GPFlow's Combination kernel."""
@@ -176,64 +169,34 @@ class CombinationKernel(AbstractKernel):
 
         self.kernel_set = kernels_list
 
-    def init_params(self, key: KeyArray) -> Dict:
-        """A template dictionary of the kernel's parameter set."""
-        num_kernels = len(self.kernel_set)
-        key_per_kernel = jax.random.split(key=key, num=num_kernels)
-        return [kernel.init_params(key_) for key_, kernel in zip(key_per_kernel, self.kernel_set)]
-
     def __call__(
         self,
-        params: Dict,
         x: Float[Array, "1 D"],
         y: Float[Array, "1 D"],
     ) -> Float[Array, "1"]:
         """Evaluate combination kernel on a pair of inputs.
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
             x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
             y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
 
         Returns:
             Float[Array, "1"]: The value of :math:`k(x, y)`.
         """
-        return self.combination_fn(
-            jnp.stack([k(p, x, y) for k, p in zip(self.kernel_set, params)])
-        )
+        return self.combination_fn(jnp.stack([k(x, y) for k in self.kernel_set]))
 
 
 class SumKernel(CombinationKernel):
     """A kernel that is the sum of a set of kernels."""
 
-    def __init__(
-        self,
-        kernel_set: List[AbstractKernel],
-        compute_engine: AbstractKernelComputation = DenseKernelComputation,
-        active_dims: Optional[List[int]] = None,
-        stationary: Optional[bool] = False,
-        spectral: Optional[bool] = False,
-        name: Optional[str] = "Sum kernel",
-    ) -> None:
-        super().__init__(
-            kernel_set, compute_engine, active_dims, stationary, spectral, name
-        )
-        self.combination_fn: Optional[Callable] = jnp.sum
+    @property
+    def combination_fn(self):
+        return jnp.sum
 
 
 class ProductKernel(CombinationKernel):
     """A kernel that is the product of a set of kernels."""
 
-    def __init__(
-        self,
-        kernel_set: List[AbstractKernel],
-        compute_engine: AbstractKernelComputation = DenseKernelComputation,
-        active_dims: Optional[List[int]] = None,
-        stationary: Optional[bool] = False,
-        spectral: Optional[bool] = False,
-        name: Optional[str] = "Product kernel",
-    ) -> None:
-        super().__init__(
-            kernel_set, compute_engine, active_dims, stationary, spectral, name
-        )
-        self.combination_fn: Optional[Callable] = jnp.prod
+    @property
+    def combination_fn(self):
+        return jnp.prod
