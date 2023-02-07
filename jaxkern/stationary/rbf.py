@@ -67,8 +67,10 @@ class RBF(AbstractKernel):
         return K.squeeze()
 
     def init_params(self, key: KeyArray) -> Dict:
+        eps = 1e-3
+        random_jitter = jax.random.uniform(key, shape=[self.ndims], minval=-eps, maxval=eps)
         params = {
-            "lengthscale": jnp.array([1.0] * self.ndims),
+            "lengthscale": jnp.array([1.0] * self.ndims) + random_jitter,
             "variance": jnp.array([1.0]),
         }
         return jax.tree_util.tree_map(lambda x: jnp.atleast_1d(x), params)
