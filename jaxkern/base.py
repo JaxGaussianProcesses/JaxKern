@@ -23,15 +23,15 @@ from jaxtyping import Array, Float
 
 from .computations import AbstractKernelComputation, DenseKernelComputation
 
-import equinox as eqx
+from jaxutils import Base
+from equinox import static_field
 
-
-class AbstractKernel(eqx.Module):
+class AbstractKernel(Base):
     """Base kernel class."""
 
-    active_dims: List[int] = eqx.static_field()
-    compute_engine: AbstractKernelComputation = eqx.static_field()
-    name: str = eqx.static_field()
+    active_dims: List[int] = static_field()
+    compute_engine: AbstractKernelComputation = static_field()
+    name: str = static_field()
 
 
     def __init__(

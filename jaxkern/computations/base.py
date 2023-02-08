@@ -24,11 +24,12 @@ from jaxlinop import (
 )
 from jaxtyping import Array, Float
 
-import equinox as eqx
+from jaxutils import Base
+from equinox import static_field
 
-class AbstractKernelComputation(eqx.Module):
+class AbstractKernelComputation(Base):
     """Abstract class for kernel computations."""
-    kernel_fn: Callable[[Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array] = eqx.static_field()
+    kernel_fn: Callable[[Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array] = static_field()
 
     def __init__(self, kernel_fn: Callable[[Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array]) -> None:
         self.kernel_fn = kernel_fn

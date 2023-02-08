@@ -13,11 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-import jax
 import jax.numpy as jnp
-from jax.random import KeyArray
 from jaxtyping import Array, Float
 
 from ..base import AbstractKernel
@@ -27,24 +25,26 @@ from ..computations import (
 )
 from .utils import squared_distance
 
+from jaxutils import param
+from jaxutils.config import Softplus
 
 class RBF(AbstractKernel):
     """The Radial Basis Function (RBF) kernel."""
-    params: Dict
+    lengthscale: Float[Array, "1 D"] = param(Softplus)
+    variance: Float[Array, "1"] = param(Softplus)
 
     def __init__(
         self,
+        lengthscale: Float[Array, "1 D"] = jnp.array([1.0]),
+        variance: Float[Array, "1"] = jnp.array([1.0]),
         compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Radial basis function kernel",
     ) -> None:
         super().__init__(compute_engine, active_dims, name)
 
-        self.params = {
-            "lengthscale": jnp.array([1.0] * self.ndims),
-            "variance": jnp.array([1.0]),
-        }
-
+        self.lengthscale = lengthscale
+        self.variance = variance
     
     def stationary(self) -> bool:
         return True
@@ -69,7 +69,7 @@ class RBF(AbstractKernel):
             Float[Array, "1"]: The value of :math:`k(x, y)`.
         """
         
-        x = self.slice_input(x) / self.params["lengthscale"]
-        y = self.slice_input(y) / self.params["lengthscale"]
-        K = self.params["variance"] * jnp.exp(-0.5 * squared_distance(x, y))
+        x = self.slice_input(x) / self.lengthscale
+        y = self.slice_input(y) / self.lengthscale
+        K = self.variance * jnp.exp(-0.5 * squared_distance(x, y))
         return K.squeeze()
