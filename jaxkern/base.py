@@ -128,8 +128,8 @@ class AbstractKernel(Base):
 
 class CombinationKernel(AbstractKernel):
     """A base class for products or sums of kernels."""
-    kernel_set: List[AbstractKernel] = eqx.static_field()
-    combination_fn: Callable = eqx.static_field()
+    kernel_set: List[AbstractKernel] = static_field()
+    combination_fn: Callable = static_field()
 
     def __init__(
         self,
