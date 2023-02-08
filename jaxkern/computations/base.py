@@ -24,10 +24,10 @@ from jaxlinop import (
 )
 from jaxtyping import Array, Float
 
-from jaxutils import Base
+from jaxutils import Module
 from equinox import static_field
 
-class AbstractKernelComputation(Base):
+class AbstractKernelComputation(Module):
     """Abstract class for kernel computations."""
     kernel_fn: Callable[[Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array] = static_field()
 

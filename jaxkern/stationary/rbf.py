@@ -26,7 +26,7 @@ from ..computations import (
 from .utils import squared_distance
 
 from jaxutils import param
-from jaxutils.config import Softplus
+from jaxutils.bijectors import Softplus
 
 class RBF(AbstractKernel):
     """The Radial Basis Function (RBF) kernel."""

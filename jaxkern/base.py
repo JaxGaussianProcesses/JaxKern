@@ -23,10 +23,10 @@ from jaxtyping import Array, Float
 
 from .computations import AbstractKernelComputation, DenseKernelComputation
 
-from jaxutils import Base
+from jaxutils import Module
 from equinox import static_field
 
-class AbstractKernel(Base):
+class AbstractKernel(Module):
     """Base kernel class."""
 
     active_dims: List[int] = static_field()
