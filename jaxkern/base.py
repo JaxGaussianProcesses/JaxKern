@@ -40,10 +40,11 @@ class AbstractKernel(Module):
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Kernel",
     ) -> None:
-
         self.compute_engine = compute_engine
         self.active_dims = active_dims
         self.name = name
+        self._stationary = False
+        self._spectral_density = None
 
     @property
     def ndims(self):
@@ -58,8 +59,11 @@ class AbstractKernel(Module):
         return self.compute_engine(kernel_fn=self.__call__).cross_covariance
 
     @property
-    def spectral(self) -> bool:
-        raise NotImplementedError
+    def spectral_density(self) -> bool:
+        if self._spectral_density is None:
+            raise NotImplementedError(
+                f"The spectral density for the {self.name} kernel is not implemented."
+            )
 
     @property
     def stationary(self) -> bool:

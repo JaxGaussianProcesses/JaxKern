@@ -21,19 +21,28 @@ from jaxtyping import Array, Float
 from ..base import AbstractKernel
 from ..computations import (
     ConstantDiagonalKernelComputation,
-    AbstractKernelComputation,
 )
+from jaxutils import param
+from jaxutils.bijectors import Softplus
 
 
 class White(AbstractKernel):
+    variance: Float[Array, "1"] = param(Softplus)
+
     def __init__(
         self,
-        compute_engine: AbstractKernelComputation = ConstantDiagonalKernelComputation,
+        variance: Float[Array, "1"] = jnp.array([1.0]),
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "White Noise Kernel",
     ) -> None:
-        super().__init__(compute_engine, active_dims, spectral_density=None, name=name)
+        super().__init__(
+            ConstantDiagonalKernelComputation,
+            active_dims,
+            spectral_density=None,
+            name=name,
+        )
         self._stationary = True
+        self.variance = variance
 
     def __call__(
         self, params: Dict, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
@@ -53,14 +62,3 @@ class White(AbstractKernel):
         """
         K = jnp.all(jnp.equal(x, y)) * params["variance"]
         return K.squeeze()
-
-    def init_params(self, key: Float[Array, "1 D"]) -> Dict:
-        """Initialise the kernel parameters.
-
-        Args:
-            key (Float[Array, "1 D"]): The key to initialise the parameters with.
-
-        Returns:
-            Dict: The initialised parameters.
-        """
-        return {"variance": jnp.array([1.0])}
