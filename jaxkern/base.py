@@ -26,13 +26,13 @@ from .computations import AbstractKernelComputation, DenseKernelComputation
 from jaxutils import Module
 from equinox import static_field
 
+
 class AbstractKernel(Module):
     """Base kernel class."""
 
     active_dims: List[int] = static_field()
     compute_engine: AbstractKernelComputation = static_field()
     name: str = static_field()
-
 
     def __init__(
         self,
@@ -44,27 +44,47 @@ class AbstractKernel(Module):
         self.compute_engine = compute_engine
         self.active_dims = active_dims
         self.name = name
-    
+
     @property
     def ndims(self):
         return 1 if not self.active_dims else len(self.active_dims)
 
-    @property 
+    @property
     def gram(self):
         return self.compute_engine(kernel_fn=self.__call__).gram
-    
+
     @property
     def cross_covariance(self):
         return self.compute_engine(kernel_fn=self.__call__).cross_covariance
 
     @property
-    def stationary(self) -> bool:
-        raise NotImplementedError
-    
-    @property
     def spectral(self) -> bool:
         raise NotImplementedError
 
+    @property
+    def stationary(self) -> bool:
+        """Boolean property as to whether the kernel is stationary or not.
+
+        Returns:
+            bool: True if the kernel is stationary.
+        """
+        return self._stationary
+
+    @property
+    def compute_engine(self) -> AbstractKernelComputation:
+        """The compute engine that is used to perform the kernel computations.
+
+        Returns:
+            AbstractKernelComputation: The compute engine that is used to perform the kernel computations.
+        """
+        return self._compute_engine
+
+    @compute_engine.setter
+    def compute_engine(self, compute_engine: AbstractKernelComputation) -> None:
+        self._compute_engine = compute_engine
+        compute_engine = self.compute_engine(kernel_fn=self.__call__)
+        self.gram = compute_engine.gram
+        self.cross_covariance = compute_engine.cross_covariance
 
     @abc.abstractmethod
     def __call__(
@@ -125,9 +145,9 @@ class AbstractKernel(Module):
         return True if self.ndims > 1 else False
 
 
-
 class CombinationKernel(AbstractKernel):
     """A base class for products or sums of kernels."""
+
     kernel_set: List[AbstractKernel] = static_field()
     combination_fn: Callable = static_field()
 
@@ -140,16 +160,17 @@ class CombinationKernel(AbstractKernel):
     ) -> None:
 
         super().__init__(
-            compute_engine=compute_engine, 
-            active_dims = active_dims, 
-            name = name,
-            )
+            compute_engine=compute_engine,
+            active_dims=active_dims,
+            name=name,
+        )
 
         self.kernel_set = kernel_set
 
         if not all(isinstance(k, AbstractKernel) for k in self.kernel_set):
             raise TypeError("can only combine Kernel instances")  # pragma: no cover
-
+        if all(k.stationary for k in self.kernel_set):
+            self._stationary = True
         self._set_kernels(self.kernel_set)
 
     @property

@@ -20,6 +20,7 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 import pytest
+import distrax as dx
 from jax.config import config
 from jaxlinop import LinearOperator, identity
 
@@ -29,11 +30,8 @@ from jaxkern.stationary import (
     Matern12,
     Matern32,
     Matern52,
-    PoweredExponential,
-    RationalQuadratic,
-    Periodic,
-    White,
 )
+from jaxkern.stationary.utils import build_student_t_distribution
 
 # Enable Float64 for more stable matrix inversions.
 config.update("jax_enable_x64", True)
@@ -45,11 +43,11 @@ _jitter = 1e-6
     "kernel",
     [
         RBF(),
-        #Matern12(),
-        #Matern32(),
-        #Matern52(),
-        #RationalQuadratic(),
-        #White(),
+        # Matern12(),
+        # Matern32(),
+        # Matern52(),
+        # RationalQuadratic(),
+        # White(),
     ],
 )
 @pytest.mark.parametrize("dim", [1, 2, 5])
@@ -72,11 +70,11 @@ def test_gram(kernel: AbstractKernel, dim: int, n: int) -> None:
     "kernel",
     [
         RBF(),
-        #Matern12(),
-        #Matern32(),
-        #Matern52(),
-        #RationalQuadratic(),
-        #White(),
+        # Matern12(),
+        # Matern32(),
+        # Matern52(),
+        # RationalQuadratic(),
+        # White(),
     ],
 )
 @pytest.mark.parametrize("num_a", [1, 2, 5])
@@ -95,14 +93,15 @@ def test_cross_covariance(
     assert Kab.shape == (num_a, num_b)
 
 
-@pytest.mark.parametrize("kernel", 
+@pytest.mark.parametrize(
+    "kernel",
     [
-        RBF(), 
-        # Matern12(), 
-        # Matern32(), 
-        # Matern52(), 
+        RBF(),
+        # Matern12(),
+        # Matern32(),
+        # Matern52(),
         # White(),
-        ],
+    ],
 )
 @pytest.mark.parametrize("dim", [1, 2, 5])
 def test_call(kernel: AbstractKernel, dim: int) -> None:
@@ -118,11 +117,12 @@ def test_call(kernel: AbstractKernel, dim: int) -> None:
     assert kxy.shape == ()
 
 
-@pytest.mark.parametrize("kern", 
+@pytest.mark.parametrize(
+    "kern",
     [
-        RBF, 
-        # Matern12, 
-        # Matern32, 
+        RBF,
+        # Matern12,
+        # Matern32,
         # Matern52,
     ],
 )
@@ -132,7 +132,11 @@ def test_call(kernel: AbstractKernel, dim: int) -> None:
 def test_pos_def(
     kern: AbstractKernel, dim: int, ell: float, sigma: float, n: int
 ) -> None:
-    kern = kern(active_dims=list(range(dim)), lengthscale = jnp.array([ell]), variance = jnp.array([sigma]))
+    kern = kern(
+        active_dims=list(range(dim)),
+        lengthscale=jnp.array([ell]),
+        variance=jnp.array([sigma]),
+    )
 
     # Create inputs x:
     x = jr.uniform(_initialise_key, (n, dim))
@@ -220,11 +224,11 @@ def test_pos_def(
 #     assert (eigen_values > 0.0).all()
 
 
-# @pytest.mark.parametrize("kernel", 
+# @pytest.mark.parametrize("kernel",
 #     [
-#         RBF, 
-#         #Matern12, 
-#         #Matern32, 
+#         RBF,
+#         #Matern12,
+#         #Matern32,
 #         #Matern52,
 #     ],
 # )
@@ -272,10 +276,10 @@ def test_pos_def(
 @pytest.mark.parametrize(
     "kernel",
     [
-        RBF, 
-        # Matern12, 
-        # Matern32, 
-        # Matern52, 
+        RBF,
+        # Matern12,
+        # Matern32,
+        # Matern52,
         # RationalQuadratic,
     ],
 )
@@ -302,3 +306,28 @@ def test_active_dim(kernel: AbstractKernel) -> None:
 
         # Test gram matrices are equal
         assert jnp.all(ad_Kxx.to_dense() == manual_Kxx.to_dense())
+
+
+@pytest.mark.parametrize("smoothness", [1, 2, 3])
+def test_build_studentt_dist(smoothness: int) -> None:
+    dist = build_student_t_distribution(smoothness)
+    assert isinstance(dist, dx.Distribution)
+
+
+@pytest.mark.parametrize(
+    "kern, df", [(Matern12(), 1), (Matern32(), 3), (Matern52(), 5)]
+)
+def test_matern_spectral_density(kern, df) -> None:
+    sdensity = kern.spectral_density
+    assert sdensity.name == "StudentT"
+    assert sdensity.df == df
+    assert sdensity.loc == jnp.array(0.0)
+    assert sdensity.scale == jnp.array(1.0)
+
+
+def test_rbf_spectral_density() -> None:
+    kern = RBF()
+    sdensity = kern.spectral_density
+    assert sdensity.name == "Normal"
+    assert sdensity.loc == jnp.array(0.0)
+    assert sdensity.scale == jnp.array(1.0)
