@@ -17,7 +17,6 @@ from typing import List, Optional
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
-import distrax as dx
 
 from ..base import AbstractKernel
 from ..computations import (
@@ -39,14 +38,20 @@ class RBF(AbstractKernel):
         self,
         lengthscale: Float[Array, "1 D"] = jnp.array([1.0]),
         variance: Float[Array, "1"] = jnp.array([1.0]),
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Radial basis function kernel",
     ) -> None:
-        super().__init__(DenseKernelComputation, active_dims, name)
-        self._stationary = True
-        self._spectral_density = dx.Normal(loc=0.0, scale=1.0)
+        super().__init__(compute_engine, active_dims, name)
+
         self.lengthscale = lengthscale
         self.variance = variance
+
+    def stationary(self) -> bool:
+        return True
+
+    def spectral(self) -> bool:
+        return True
 
     def __call__(
         self, x: Float[Array, "1 D"], y: Float[Array, "1 D"]

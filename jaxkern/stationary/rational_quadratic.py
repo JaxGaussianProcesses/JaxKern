@@ -17,35 +17,26 @@ from typing import List, Optional
 
 import jax
 import jax.numpy as jnp
-from jaxtyping import Array, Float
+from jax.random import KeyArray
+from jaxtyping import Array
 
 from ..base import AbstractKernel
 from ..computations import (
     DenseKernelComputation,
 )
 from .utils import squared_distance
-from jaxutils import param
-from jaxutils.bijectors import Softplus
 
 
 class RationalQuadratic(AbstractKernel):
-    lengthscale: Float[Array, "1 D"] = param(Softplus)
-    variance: Float[Array, "1"] = param(Softplus)
-    alpha: Float[Array, "1"] = param(Softplus)
-
     def __init__(
         self,
-        lengthscale: Float[Array, "1 D"] = jnp.array([1.0]),
-        variance: Float[Array, "1"] = jnp.array([1.0]),
-        alpha: Float[Array, "1"] = jnp.array([1.0]),
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Rational Quadratic",
     ) -> None:
-        super().__init__(DenseKernelComputation, active_dims, name=name)
+        super().__init__(
+            DenseKernelComputation, active_dims, spectral_density=None, name=name
+        )
         self._stationary = True
-        self.lengthscale = lengthscale
-        self.variance = variance
-        self.alpha = alpha
 
     def __call__(self, params: dict, x: jax.Array, y: jax.Array) -> Array:
         """Evaluate the kernel on a pair of inputs :math:`(x, y)` with length-scale parameter :math:`\\ell` and variance :math:`\\sigma`
@@ -66,3 +57,10 @@ class RationalQuadratic(AbstractKernel):
             1 + 0.5 * squared_distance(x, y) / params["alpha"]
         ) ** (-params["alpha"])
         return K.squeeze()
+
+    def init_params(self, key: KeyArray) -> dict:
+        return {
+            "lengthscale": jnp.array([1.0] * self.ndims),
+            "variance": jnp.array([1.0]),
+            "alpha": jnp.array([1.0]),
+        }

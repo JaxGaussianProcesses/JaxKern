@@ -16,6 +16,7 @@
 from typing import Dict, List, Optional
 
 import jax.numpy as jnp
+from jax.random import KeyArray
 from jaxtyping import Array, Float
 
 from ..base import AbstractKernel
@@ -23,28 +24,19 @@ from ..computations import (
     DenseKernelComputation,
 )
 from .utils import euclidean_distance, build_student_t_distribution
-from jaxutils import param
-from jaxutils.bijectors import Softplus
 
 
 class Matern12(AbstractKernel):
     """The Matérn kernel with smoothness parameter fixed at 0.5."""
 
-    lengthscale: Float[Array, "1 D"] = param(Softplus)
-    variance: Float[Array, "1"] = param(Softplus)
-
     def __init__(
         self,
-        lengthscale: Float[Array, "1 D"] = jnp.array([1.0]),
-        variance: Float[Array, "1"] = jnp.array([1.0]),
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Matérn 1/2 kernel",
     ) -> None:
-        super().__init__(DenseKernelComputation, active_dims, name)
+        spectral_density = build_student_t_distribution(nu=1)
+        super().__init__(DenseKernelComputation, active_dims, spectral_density, name)
         self._stationary = True
-        self._spectral_density = build_student_t_distribution(nu=1)
-        self.lengthscale = lengthscale
-        self.variance = variance
 
     def __call__(
         self,
@@ -69,3 +61,9 @@ class Matern12(AbstractKernel):
         y = self.slice_input(y) / params["lengthscale"]
         K = params["variance"] * jnp.exp(-euclidean_distance(x, y))
         return K.squeeze()
+
+    def init_params(self, key: KeyArray) -> Dict:
+        return {
+            "lengthscale": jnp.array([1.0] * self.ndims),
+            "variance": jnp.array([1.0]),
+        }

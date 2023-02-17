@@ -13,19 +13,18 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import jax
 import jax.numpy as jnp
-from jaxtyping import Array, Float
+from jax.random import KeyArray
+from jaxtyping import Array
 
 from ..base import AbstractKernel
 from ..computations import (
     DenseKernelComputation,
 )
 from .utils import euclidean_distance
-from jaxutils import param
-from jaxutils.bijectors import Softplus
 
 
 class PoweredExponential(AbstractKernel):
@@ -35,23 +34,15 @@ class PoweredExponential(AbstractKernel):
 
     """
 
-    lengthscale: Float[Array, "1 D"] = param(Softplus)
-    variance: Float[Array, "1"] = param(Softplus)
-    power: Float[Array, "1"] = param(Softplus)
-
     def __init__(
         self,
-        lengthscale: Float[Array, "1 D"] = jnp.array([1.0]),
-        variance: Float[Array, "1"] = jnp.array([1.0]),
-        power: Float[Array, "1"] = jnp.array([1.0]),
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Powered exponential",
     ) -> None:
-        super().__init__(DenseKernelComputation, active_dims, name=name)
+        super().__init__(
+            DenseKernelComputation, active_dims, spectral_density=None, name=name
+        )
         self._stationary = True
-        self.lengthscale = lengthscale
-        self.variance = variance
-        self.power = power
 
     def __call__(self, params: dict, x: jax.Array, y: jax.Array) -> Array:
         """Evaluate the kernel on a pair of inputs :math:`(x, y)` with length-scale parameter :math:`\\ell`, :math:`\\sigma` and power :math:`\\kappa`.
@@ -71,3 +62,10 @@ class PoweredExponential(AbstractKernel):
         y = self.slice_input(y) / params["lengthscale"]
         K = params["variance"] * jnp.exp(-euclidean_distance(x, y) ** params["power"])
         return K.squeeze()
+
+    def init_params(self, key: KeyArray) -> Dict:
+        return {
+            "lengthscale": jnp.array([1.0] * self.ndims),
+            "variance": jnp.array([1.0]),
+            "power": jnp.array([1.0]),
+        }
