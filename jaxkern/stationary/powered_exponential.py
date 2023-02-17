@@ -48,7 +48,6 @@ class PoweredExponential(AbstractKernel):
         name: Optional[str] = "Powered exponential",
     ) -> None:
         super().__init__(DenseKernelComputation, active_dims, name=name)
-        self._stationary = True
         self.lengthscale = lengthscale
         self.variance = variance
         self.power = power
@@ -71,3 +70,7 @@ class PoweredExponential(AbstractKernel):
         y = self.slice_input(y) / params["lengthscale"]
         K = params["variance"] * jnp.exp(-euclidean_distance(x, y) ** params["power"])
         return K.squeeze()
+
+    @property
+    def stationary(self) -> bool:
+        return True

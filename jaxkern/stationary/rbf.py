@@ -43,8 +43,6 @@ class RBF(AbstractKernel):
         name: Optional[str] = "Radial basis function kernel",
     ) -> None:
         super().__init__(DenseKernelComputation, active_dims, name)
-        self._stationary = True
-        self._spectral_density = dx.Normal(loc=0.0, scale=1.0)
         self.lengthscale = lengthscale
         self.variance = variance
 
@@ -69,3 +67,11 @@ class RBF(AbstractKernel):
         y = self.slice_input(y) / self.lengthscale
         K = self.variance * jnp.exp(-0.5 * squared_distance(x, y))
         return K.squeeze()
+
+    @property
+    def spectral_density(self) -> dx.Distribution:
+        return dx.Normal(loc=0.0, scale=1.0)
+
+    @property
+    def stationary(self) -> bool:
+        return True

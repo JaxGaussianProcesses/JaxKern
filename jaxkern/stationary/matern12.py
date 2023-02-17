@@ -17,6 +17,7 @@ from typing import Dict, List, Optional
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
+import distrax as dx
 
 from ..base import AbstractKernel
 from ..computations import (
@@ -41,8 +42,6 @@ class Matern12(AbstractKernel):
         name: Optional[str] = "Matérn 1/2 kernel",
     ) -> None:
         super().__init__(DenseKernelComputation, active_dims, name)
-        self._stationary = True
-        self._spectral_density = build_student_t_distribution(nu=1)
         self.lengthscale = lengthscale
         self.variance = variance
 
@@ -69,3 +68,11 @@ class Matern12(AbstractKernel):
         y = self.slice_input(y) / params["lengthscale"]
         K = params["variance"] * jnp.exp(-euclidean_distance(x, y))
         return K.squeeze()
+
+    @property
+    def spectral_density(self) -> dx.Distribution:
+        return build_student_t_distribution(nu=1)
+
+    @property
+    def stationary(self) -> bool:
+        return True

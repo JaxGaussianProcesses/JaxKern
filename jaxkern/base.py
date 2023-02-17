@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import abc
 from typing import Callable, List, Optional, Sequence
-
+import distrax as dx
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
@@ -30,8 +30,8 @@ from equinox import static_field
 class AbstractKernel(Module):
     """Base kernel class."""
 
-    active_dims: List[int] = static_field()
     compute_engine: AbstractKernelComputation = static_field()
+    active_dims: List[int] = static_field()
     name: str = static_field()
 
     def __init__(
@@ -43,8 +43,6 @@ class AbstractKernel(Module):
         self.compute_engine = compute_engine
         self.active_dims = active_dims
         self.name = name
-        self._stationary = False
-        self._spectral_density = None
 
     @property
     def ndims(self):
@@ -59,7 +57,7 @@ class AbstractKernel(Module):
         return self.compute_engine(kernel_fn=self.__call__).cross_covariance
 
     @property
-    def spectral_density(self) -> bool:
+    def spectral_density(self) -> dx.Distribution:
         if self._spectral_density is None:
             raise NotImplementedError(
                 f"The spectral density for the {self.name} kernel is not implemented."
@@ -74,21 +72,21 @@ class AbstractKernel(Module):
         """
         return self._stationary
 
-    @property
-    def compute_engine(self) -> AbstractKernelComputation:
-        """The compute engine that is used to perform the kernel computations.
+    # @property
+    # def compute_engine(self) -> AbstractKernelComputation:
+    #     """The compute engine that is used to perform the kernel computations.
 
-        Returns:
-            AbstractKernelComputation: The compute engine that is used to perform the kernel computations.
-        """
-        return self._compute_engine
+    #     Returns:
+    #         AbstractKernelComputation: The compute engine that is used to perform the kernel computations.
+    #     """
+    #     return self._compute_engine
 
-    @compute_engine.setter
-    def compute_engine(self, compute_engine: AbstractKernelComputation) -> None:
-        self._compute_engine = compute_engine
-        compute_engine = self.compute_engine(kernel_fn=self.__call__)
-        self.gram = compute_engine.gram
-        self.cross_covariance = compute_engine.cross_covariance
+    # @compute_engine.setter
+    # def compute_engine(self, compute_engine: AbstractKernelComputation) -> None:
+    #     self._compute_engine = compute_engine
+    #     compute_engine = self.compute_engine(kernel_fn=self.__call__)
+    #     self.gram = compute_engine.gram
+    #     self.cross_covariance = compute_engine.cross_covariance
 
     @abc.abstractmethod
     def __call__(

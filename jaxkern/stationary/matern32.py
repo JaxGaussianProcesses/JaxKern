@@ -17,7 +17,7 @@ from typing import Dict, List, Optional
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
-
+import distrax as dx
 from ..base import AbstractKernel
 from ..computations import (
     DenseKernelComputation,
@@ -41,8 +41,6 @@ class Matern32(AbstractKernel):
         name: Optional[str] = "Matern 3/2",
     ) -> None:
         super().__init__(DenseKernelComputation, active_dims, name)
-        self._stationary = True
-        self._spectral_density = build_student_t_distribution(nu=3)
         self.lengthscale = lengthscale
         self.variance = variance
 
@@ -75,3 +73,11 @@ class Matern32(AbstractKernel):
             * jnp.exp(-jnp.sqrt(3.0) * tau)
         )
         return K.squeeze()
+
+    @property
+    def spectral_density(self) -> dx.Distribution:
+        return build_student_t_distribution(nu=3)
+
+    @property
+    def stationary(self) -> bool:
+        return True

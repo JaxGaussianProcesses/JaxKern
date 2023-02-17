@@ -41,7 +41,6 @@ class White(AbstractKernel):
             spectral_density=None,
             name=name,
         )
-        self._stationary = True
         self.variance = variance
 
     def __call__(
@@ -62,3 +61,7 @@ class White(AbstractKernel):
         """
         K = jnp.all(jnp.equal(x, y)) * params["variance"]
         return K.squeeze()
+
+    @property
+    def stationary(self) -> bool:
+        return True

@@ -42,7 +42,6 @@ class RationalQuadratic(AbstractKernel):
         name: Optional[str] = "Rational Quadratic",
     ) -> None:
         super().__init__(DenseKernelComputation, active_dims, name=name)
-        self._stationary = True
         self.lengthscale = lengthscale
         self.variance = variance
         self.alpha = alpha
@@ -66,3 +65,7 @@ class RationalQuadratic(AbstractKernel):
             1 + 0.5 * squared_distance(x, y) / params["alpha"]
         ) ** (-params["alpha"])
         return K.squeeze()
+
+    @property
+    def stationary(self) -> bool:
+        return True

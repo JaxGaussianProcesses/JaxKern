@@ -46,7 +46,6 @@ class Periodic(AbstractKernel):
         name: Optional[str] = "Periodic",
     ) -> None:
         super().__init__(DenseKernelComputation, active_dims, name=name)
-        self._stationary = True
         self.lengthscale = lengthscale
         self.variance = variance
         self.period = period
@@ -71,3 +70,7 @@ class Periodic(AbstractKernel):
         ) ** 2
         K = params["variance"] * jnp.exp(-0.5 * jnp.sum(sine_squared, axis=0))
         return K.squeeze()
+
+    @property
+    def stationary(self) -> bool:
+        return True
