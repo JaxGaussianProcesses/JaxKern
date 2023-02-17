@@ -25,6 +25,7 @@ from .base import AbstractKernelComputation
 
 
 class ConstantDiagonalKernelComputation(AbstractKernelComputation):
+
     def gram(self, inputs: Float[Array, "N D"]) -> ConstantDiagonalLinearOperator:
         """For a kernel with diagonal structure, compute the NxN gram matrix on
         an input matrix of shape NxD.
@@ -40,9 +41,7 @@ class ConstantDiagonalKernelComputation(AbstractKernelComputation):
 
         value = self.kernel_fn(inputs[0], inputs[0])
 
-        return ConstantDiagonalLinearOperator(
-            value=jnp.atleast_1d(value), size=inputs.shape[0]
-        )
+        return ConstantDiagonalLinearOperator(value = jnp.atleast_1d(value), size=inputs.shape[0])
 
     def diagonal(self, inputs: Float[Array, "N D"]) -> DiagonalLinearOperator:
         """For a given kernel, compute the elementwise diagonal of the
@@ -61,9 +60,7 @@ class ConstantDiagonalKernelComputation(AbstractKernelComputation):
 
         return DiagonalLinearOperator(diag=diag)
 
-    def cross_covariance(
-        self, x: Float[Array, "N D"], y: Float[Array, "M D"]
-    ) -> Float[Array, "N M"]:
+    def cross_covariance(self, x: Float[Array, "N D"], y: Float[Array, "M D"]) -> Float[Array, "N M"]:
         """For a given kernel, compute the NxM covariance matrix on a pair of input
         matrices of shape NxD and MxD.
 

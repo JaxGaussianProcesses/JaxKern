@@ -14,10 +14,8 @@
 # ==============================================================================
 
 """JaxKern."""
-from .approximations import RFF
 from .base import ProductKernel, SumKernel
 from .computations import (
-    BasisFunctionComputation,
     ConstantDiagonalKernelComputation,
     DenseKernelComputation,
     DiagonalKernelComputation,
@@ -54,8 +52,6 @@ __all__ = [
     "Periodic",
     "RationalQuadratic",
     "White",
-    "BasisFunctionComputation",
-    "RFF",
 ]
 
 from . import _version

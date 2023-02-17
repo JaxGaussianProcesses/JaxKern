@@ -31,7 +31,6 @@ REQUIRES = [
     "jaxtyping>=0.0.2",
     "jaxlinop>=0.0.3",
     "deprecation",
-    "distrax",
 ]
 
 EXTRAS = {

@@ -20,6 +20,7 @@ from jaxtyping import Array, Float
 
 from ..base import AbstractKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 from .utils import squared_distance
@@ -27,10 +28,8 @@ from .utils import squared_distance
 from jaxutils import param
 from jaxutils.bijectors import Softplus
 
-
 class RBF(AbstractKernel):
     """The Radial Basis Function (RBF) kernel."""
-
     lengthscale: Float[Array, "1 D"] = param(Softplus)
     variance: Float[Array, "1"] = param(Softplus)
 
@@ -46,10 +45,10 @@ class RBF(AbstractKernel):
 
         self.lengthscale = lengthscale
         self.variance = variance
-
+    
     def stationary(self) -> bool:
         return True
-
+    
     def spectral(self) -> bool:
         return True
 
@@ -69,7 +68,7 @@ class RBF(AbstractKernel):
         Returns:
             Float[Array, "1"]: The value of :math:`k(x, y)`.
         """
-
+        
         x = self.slice_input(x) / self.lengthscale
         y = self.slice_input(y) / self.lengthscale
         K = self.variance * jnp.exp(-0.5 * squared_distance(x, y))
