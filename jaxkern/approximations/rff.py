@@ -1,7 +1,8 @@
 from ..base import AbstractKernel
 from ..computations import BasisFunctionComputation
 from jax.random import KeyArray
-from typing import Dict, Any
+from typing import Any
+from jaxutils import Identity, Parameters
 
 
 class RFF(AbstractKernel):
@@ -38,7 +39,7 @@ class RFF(AbstractKernel):
         # Inform the compute engine of the number of basis functions
         self.compute_engine.num_basis_fns = num_basis_fns
 
-    def init_params(self, key: KeyArray) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
         """Initialise the parameters of the RFF approximation.
 
         Args:
@@ -52,8 +53,9 @@ class RFF(AbstractKernel):
         frequencies = self.base_kernel.spectral_density.sample(
             seed=key, sample_shape=(self.num_basis_fns, n_dims)
         )
-        base_params["frequencies"] = frequencies
-        return base_params
+        base_params.params["frequencies"] = frequencies
+        base_params.bijectors["frequencies"] = Identity
+        return Parameters(base_params.params, base_params.bijectors)
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         pass

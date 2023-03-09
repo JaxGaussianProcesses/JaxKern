@@ -14,10 +14,10 @@
 # ==============================================================================
 
 from typing import Dict, Optional, List
-
+from jax.random import KeyArray
 import jax.numpy as jnp
 from jaxtyping import Array, Float
-
+from jaxutils import Parameters, Softplus
 from ..base import AbstractKernel
 from ..computations import (
     ConstantDiagonalKernelComputation,
@@ -54,7 +54,7 @@ class White(AbstractKernel):
         K = jnp.all(jnp.equal(x, y)) * params["variance"]
         return K.squeeze()
 
-    def init_params(self, key: Float[Array, "1 D"]) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
         """Initialise the kernel parameters.
 
         Args:
@@ -63,4 +63,12 @@ class White(AbstractKernel):
         Returns:
             Dict: The initialised parameters.
         """
-        return {"variance": jnp.array([1.0])}
+        params = {
+            "variance": jnp.array([1.0]),
+        }
+
+        bijectors = {
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)

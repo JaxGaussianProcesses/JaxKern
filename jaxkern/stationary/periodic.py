@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array
 
+from jaxutils import Parameters, Softplus
 from ..base import AbstractKernel
 from ..computations import (
     DenseKernelComputation,
@@ -38,7 +39,10 @@ class Periodic(AbstractKernel):
         name: Optional[str] = "Periodic",
     ) -> None:
         super().__init__(
-            DenseKernelComputation, active_dims, spectral_density=None, name=name
+            DenseKernelComputation,
+            active_dims,
+            spectral_density=None,
+            name=name,
         )
         self._stationary = True
 
@@ -63,9 +67,14 @@ class Periodic(AbstractKernel):
         K = params["variance"] * jnp.exp(-0.5 * jnp.sum(sine_squared, axis=0))
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
-        return {
+    def init_params(self, key: KeyArray) -> Parameters:
+
+        params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
             "period": jnp.array([1.0] * self.ndims),
         }
+
+        bijectors = {"lengthscale": Softplus, "variance": Softplus, "period": Softplus}
+
+        return Parameters(params, bijectors)

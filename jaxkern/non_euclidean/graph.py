@@ -19,6 +19,7 @@ import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array, Float
 
+from jaxutils import Parameters, Softplus
 from ..computations import EigenKernelComputation
 from ..base import AbstractKernel
 from .utils import jax_gather_nd
@@ -81,14 +82,6 @@ class GraphKernel(AbstractKernel):
         )  # shape (n,n)
         return Kxx.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
-        """Initialise the lengthscale, variance and smoothness parameters of the kernel"""
-        return {
-            "lengthscale": jnp.array([1.0] * self.ndims),
-            "variance": jnp.array([1.0]),
-            "smoothness": jnp.array([1.0]),
-        }
-
     @property
     def num_vertex(self) -> int:
         """The number of vertices within the graph.
@@ -97,3 +90,19 @@ class GraphKernel(AbstractKernel):
             int: An integer representing the number of vertices within the graph.
         """
         return self.compute_engine.num_vertex
+
+    def init_params(self, key: KeyArray) -> Dict:
+
+        params = {
+            "lengthscale": jnp.array([1.0] * self.ndims),
+            "variance": jnp.array([1.0]),
+            "smoothness": jnp.array([1.0]),
+        }
+
+        bijectors = {
+            "lengthscale": Softplus,
+            "variance": Softplus,
+            "smoothness": Softplus,
+        }
+
+        return Parameters(params, bijectors)

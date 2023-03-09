@@ -18,6 +18,7 @@ from typing import Dict, List, Optional
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array, Float
+from jaxutils import Parameters, Softplus
 
 from ..base import AbstractKernel
 from ..computations import (
@@ -67,7 +68,14 @@ class Polynomial(AbstractKernel):
         return K.squeeze()
 
     def init_params(self, key: KeyArray) -> Dict:
-        return {
+        params = {
             "shift": jnp.array([1.0]),
             "variance": jnp.array([1.0] * self.ndims),
         }
+
+        bijectors = {
+            "shift": Softplus,
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)

@@ -19,7 +19,7 @@ import jax
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array
-
+from jaxutils import Parameters, Softplus
 from ..base import AbstractKernel
 from ..computations import (
     DenseKernelComputation,
@@ -34,7 +34,10 @@ class RationalQuadratic(AbstractKernel):
         name: Optional[str] = "Rational Quadratic",
     ) -> None:
         super().__init__(
-            DenseKernelComputation, active_dims, spectral_density=None, name=name
+            DenseKernelComputation,
+            active_dims,
+            spectral_density=None,
+            name=name,
         )
         self._stationary = True
 
@@ -58,9 +61,18 @@ class RationalQuadratic(AbstractKernel):
         ) ** (-params["alpha"])
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> dict:
-        return {
+    def init_params(self, key: KeyArray) -> Parameters:
+
+        params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
             "alpha": jnp.array([1.0]),
         }
+
+        bijectors = {
+            "lengthscale": Softplus,
+            "variance": Softplus,
+            "period": Softplus,
+        }
+
+        return Parameters(params, bijectors)

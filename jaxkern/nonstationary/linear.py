@@ -19,6 +19,7 @@ import jax
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array
+from jaxutils import Parameters, Softplus
 
 from ..base import AbstractKernel
 from ..computations import (
@@ -65,4 +66,13 @@ class Linear(AbstractKernel):
         return K.squeeze()
 
     def init_params(self, key: KeyArray) -> Dict:
-        return {"variance": jnp.array([1.0])}
+
+        params = {
+            "variance": jnp.array([1.0]),
+        }
+
+        bijectors = {
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)

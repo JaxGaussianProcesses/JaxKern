@@ -23,7 +23,6 @@ import pytest
 import distrax as dx
 from jax.config import config
 from jaxlinop import LinearOperator, identity
-from jaxutils.parameters import initialise
 
 from jaxkern.base import AbstractKernel
 from jaxkern.stationary import (
@@ -253,8 +252,8 @@ def test_initialisation(kernel: AbstractKernel, dim: int) -> None:
     ],
 )
 def test_dtype(kernel: AbstractKernel) -> None:
-    parameter_state = initialise(kernel(), _initialise_key)
-    params, *_ = parameter_state.unpack()
+    params = kernel().init_params(_initialise_key)
+    # params, *_ = parameter_state.unpack()
     for k, v in params.items():
         assert v.dtype == jnp.float64
         assert isinstance(k, str)

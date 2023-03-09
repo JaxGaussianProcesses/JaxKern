@@ -20,7 +20,6 @@ import jax.random as jr
 import pytest
 from jax.config import config
 from jaxlinop import LinearOperator, identity
-from jaxutils.parameters import initialise
 
 from jaxkern.base import AbstractKernel
 from jaxkern.nonstationary import Linear, Polynomial
@@ -114,7 +113,7 @@ def test_pos_def(
     ],
 )
 def test_dtype(kernel: AbstractKernel) -> None:
-    parameter_state = initialise(kernel(), _initialise_key)
+    parameter_state = kernel().init_params(_initialise_key)
     params, *_ = parameter_state.unpack()
     for k, v in params.items():
         assert v.dtype == jnp.float64

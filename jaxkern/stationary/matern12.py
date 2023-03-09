@@ -18,6 +18,7 @@ from typing import Dict, List, Optional
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array, Float
+from jaxutils import Parameters, Softplus
 
 from ..base import AbstractKernel
 from ..computations import (
@@ -63,7 +64,15 @@ class Matern12(AbstractKernel):
         return K.squeeze()
 
     def init_params(self, key: KeyArray) -> Dict:
-        return {
+
+        params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
         }
+
+        bijectors = {
+            "lengthscale": Softplus,
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)
