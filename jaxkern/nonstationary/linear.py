@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax
 import jax.numpy as jnp
@@ -65,7 +65,7 @@ class Linear(AbstractKernel):
         K = params["variance"] * jnp.matmul(x.T, y)
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
         params = {
             "variance": jnp.array([1.0]),
         }

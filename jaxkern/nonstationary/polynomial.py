@@ -67,7 +67,7 @@ class Polynomial(AbstractKernel):
         K = jnp.power(params["shift"] + jnp.dot(x * params["variance"], y), self.degree)
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
         params = {
             "shift": jnp.array([1.0]),
             "variance": jnp.array([1.0] * self.ndims),

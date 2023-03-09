@@ -22,7 +22,7 @@ import jax.random
 import jax
 from jax.random import KeyArray
 from jaxtyping import Array, Float
-from jaxutils import PyTree
+from jaxutils import PyTree, Parameters
 
 from .computations import AbstractKernelComputation, DenseKernelComputation
 import distrax as dx
@@ -138,7 +138,7 @@ class AbstractKernel(PyTree):
         return True if self.ndims > 1 else False
 
     @abc.abstractmethod
-    def init_params(self, key: KeyArray) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
         """A template dictionary of the kernel's parameter set.
 
         Args:
@@ -200,7 +200,7 @@ class CombinationKernel(AbstractKernel):
 
         self.kernel_set = kernels_list
 
-    def init_params(self, key: KeyArray) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
         """A template dictionary of the kernel's parameter set."""
         num_kernels = len(self.kernel_set)
         key_per_kernel = jax.random.split(key=key, num=num_kernels)

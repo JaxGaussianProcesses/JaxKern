@@ -91,7 +91,7 @@ class GraphKernel(AbstractKernel):
         """
         return self.compute_engine.num_vertex
 
-    def init_params(self, key: KeyArray) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
         params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
