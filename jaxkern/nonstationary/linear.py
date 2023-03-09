@@ -66,7 +66,6 @@ class Linear(AbstractKernel):
         return K.squeeze()
 
     def init_params(self, key: KeyArray) -> Dict:
-
         params = {
             "variance": jnp.array([1.0]),
         }

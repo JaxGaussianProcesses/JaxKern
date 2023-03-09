@@ -57,7 +57,6 @@ _jitter = 1e-6
 @pytest.mark.parametrize("dim", [1, 2, 5])
 @pytest.mark.parametrize("n", [1, 2, 10])
 def test_gram(kernel: AbstractKernel, dim: int, n: int) -> None:
-
     # Gram constructor static method:
     kernel.gram
 
@@ -106,7 +105,6 @@ def test_cross_covariance(
 @pytest.mark.parametrize("kernel", [RBF(), Matern12(), Matern32(), Matern52(), White()])
 @pytest.mark.parametrize("dim", [1, 2, 5])
 def test_call(kernel: AbstractKernel, dim: int) -> None:
-
     # Datapoint x and datapoint y:
     x = jnp.array([[1.0] * dim])
     y = jnp.array([[0.5] * dim])
@@ -220,7 +218,6 @@ def test_pos_def_power_exp(
 @pytest.mark.parametrize("kernel", [RBF, Matern12, Matern32, Matern52])
 @pytest.mark.parametrize("dim", [None, 1, 2, 5, 10])
 def test_initialisation(kernel: AbstractKernel, dim: int) -> None:
-
     if dim is None:
         kern = kernel()
         assert kern.ndims == 1

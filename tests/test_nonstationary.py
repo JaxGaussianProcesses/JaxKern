@@ -40,7 +40,6 @@ _jitter = 1e-6
 @pytest.mark.parametrize("dim", [1, 2, 5])
 @pytest.mark.parametrize("n", [1, 2, 10])
 def test_gram(kernel: AbstractKernel, dim: int, n: int) -> None:
-
     # Gram constructor static method:
     kernel.gram
 
@@ -128,7 +127,6 @@ def test_dtype(kernel: AbstractKernel) -> None:
 def test_polynomial(
     degree: int, dim: int, variance: float, shift: float, n: int
 ) -> None:
-
     # Define inputs
     x = jnp.linspace(0.0, 1.0, n * dim).reshape(n, dim)
 

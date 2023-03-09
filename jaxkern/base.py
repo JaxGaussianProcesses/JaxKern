@@ -204,7 +204,10 @@ class CombinationKernel(AbstractKernel):
         """A template dictionary of the kernel's parameter set."""
         num_kernels = len(self.kernel_set)
         key_per_kernel = jax.random.split(key=key, num=num_kernels)
-        return [kernel.init_params(key_) for key_, kernel in zip(key_per_kernel, self.kernel_set)]
+        return [
+            kernel.init_params(key_)
+            for key_, kernel in zip(key_per_kernel, self.kernel_set)
+        ]
 
     def __call__(
         self,

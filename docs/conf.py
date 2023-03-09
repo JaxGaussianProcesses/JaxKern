@@ -18,10 +18,6 @@ import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
-from importlib_metadata import version
-
-import docs.conf_sphinx_patch
-
 
 def read(*names, **kwargs):
     """Function to decode a read files. Credit GPyTorch."""
@@ -35,9 +31,7 @@ def read(*names, **kwargs):
 def find_version(*file_paths):
     """Function to identify the library's current version. Credit GPyTorch."""
     version_file = read(*file_paths)
-    version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
-    )
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
@@ -134,9 +128,7 @@ with open("latex_symbols.tex", "r") as f:
         macros = re.findall(r"\\newcommand{\\(.*?)}(\[(\d)\])?{(.+)}", line)
         for macro in macros:
             if len(macro[1]) == 0:
-                mathjax3_config["tex"]["macros"][macro[0]] = (
-                    "{" + macro[3] + "}"
-                )
+                mathjax3_config["tex"]["macros"][macro[0]] = "{" + macro[3] + "}"
             else:
                 mathjax3_config["tex"]["macros"][macro[0]] = [
                     "{" + macro[3] + "}",

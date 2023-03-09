@@ -55,7 +55,6 @@ class AbstractKernelComputation(PyTree):
         params: Dict,
         inputs: Float[Array, "N D"],
     ) -> LinearOperator:
-
         """Compute Gram covariance operator of the kernel function.
 
         Args:

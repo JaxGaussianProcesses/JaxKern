@@ -62,7 +62,6 @@ class RationalQuadratic(AbstractKernel):
         return K.squeeze()
 
     def init_params(self, key: KeyArray) -> Parameters:
-
         params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
