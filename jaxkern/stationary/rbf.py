@@ -19,6 +19,7 @@ import jax
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array, Float
+from jaxutils import Parameters, Softplus
 
 from ..base import AbstractKernel
 from ..computations import (
@@ -66,9 +67,18 @@ class RBF(AbstractKernel):
         K = params["variance"] * jnp.exp(-0.5 * squared_distance(x, y))
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
+         
         params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
         }
-        return jax.tree_util.tree_map(lambda x: jnp.atleast_1d(x), params)
+
+        bijectors = {
+            "lengthscale": Softplus,
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)
+    
+    
