@@ -22,7 +22,8 @@ import jax.random
 import jax
 from jax.random import KeyArray
 from jaxtyping import Array, Float
-from jaxutils import PyTree, Parameters
+from jaxutils import Parameters
+
 
 from .computations import AbstractKernelComputation, DenseKernelComputation
 import distrax as dx
@@ -31,7 +32,7 @@ import distrax as dx
 ##########################################
 # Abtract classes
 ##########################################
-class AbstractKernel(PyTree):
+class AbstractKernel(metaclass=abc.ABCMeta):
     """
     Base kernel class"""
 
