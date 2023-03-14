@@ -113,8 +113,8 @@ def test_pos_def(
 )
 def test_dtype(kernel: AbstractKernel) -> None:
     parameter_state = kernel().init_params(_initialise_key)
-    params, *_ = parameter_state.unpack()
-    for k, v in params.items():
+    params = parameter_state.unpack()
+    for k, v in params["params"].items():
         assert v.dtype == jnp.float64
         assert isinstance(k, str)
 
