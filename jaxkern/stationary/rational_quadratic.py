@@ -22,6 +22,7 @@ from jaxtyping import Array
 from jaxutils import Parameters, Softplus
 from ..base import StationaryKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 from .utils import squared_distance
@@ -30,11 +31,12 @@ from .utils import squared_distance
 class RationalQuadratic(StationaryKernel):
     def __init__(
         self,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Rational Quadratic",
     ) -> None:
         super().__init__(
-            DenseKernelComputation,
+            compute_engine,
             active_dims,
             name=name,
         )

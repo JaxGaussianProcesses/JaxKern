@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, Optional, List
+from typing import Optional, List
 from jax.random import KeyArray
 import jax.numpy as jnp
 from jaxtyping import Array, Float
@@ -36,7 +36,7 @@ class White(StationaryKernel):
         self._spectral_density = None
 
     def __call__(
-        self, params: Dict, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
+        self, params: Parameters, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
     ) -> Float[Array, "1"]:
         """Evaluate the kernel on a pair of inputs :math:`(x, y)` with variance :math:`\\sigma`
 
@@ -44,7 +44,7 @@ class White(StationaryKernel):
             k(x, y) = \\sigma^2 \\delta(x-y)
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
+            params (Parameters): Parameter set for which the kernel should be evaluated on.
             x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
             y (Float[Array, "1 D"]): The right hand argument of the kernel function's call.
 
@@ -61,7 +61,7 @@ class White(StationaryKernel):
             key (Float[Array, "1 D"]): The key to initialise the parameters with.
 
         Returns:
-            Dict: The initialised parameters.
+            Parameters: The initialised parameters.
         """
         params = {
             "variance": jnp.array([1.0]),

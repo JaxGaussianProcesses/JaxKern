@@ -1,9 +1,10 @@
-from typing import Callable, Dict
+from typing import Callable
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 from .base import AbstractKernelComputation
 from jaxlinop import DenseLinearOperator
+from jaxutils import Parameters
 
 
 class BasisFunctionComputation(AbstractKernelComputation):
@@ -12,7 +13,7 @@ class BasisFunctionComputation(AbstractKernelComputation):
     def __init__(
         self,
         kernel_fn: Callable[
-            [Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array
+            [Parameters, Float[Array, "1 D"], Float[Array, "1 D"]], Array
         ] = None,
     ) -> None:
         """Initialise the computation engine for a basis function approximation to a kernel.
@@ -33,11 +34,11 @@ class BasisFunctionComputation(AbstractKernelComputation):
         self._num_basis_fns = float(num_basis_fns)
 
     def cross_covariance(
-        self, params: Dict, x: Float[Array, "N D"], y: Float[Array, "M D"]
+        self, params: Parameters, x: Float[Array, "N D"], y: Float[Array, "M D"]
     ) -> Float[Array, "N M"]:
         """For a pair of inputs, compute the cross covariance matrix between the inputs.
         Args:
-            params (Dict): A dictionary of parameters for which the cross-covariance matrix should be constructed with.
+            params (Parameters): A dictionary of parameters for which the cross-covariance matrix should be constructed with.
             x: A N x D array of inputs.
             y: A M x D array of inputs.
 
@@ -53,11 +54,13 @@ class BasisFunctionComputation(AbstractKernelComputation):
         z1 /= self.num_basis_fns
         return params["variance"] * jnp.matmul(z1, z2.T)
 
-    def gram(self, params: Dict, inputs: Float[Array, "N D"]) -> DenseLinearOperator:
+    def gram(
+        self, params: Parameters, inputs: Float[Array, "N D"]
+    ) -> DenseLinearOperator:
         """For the Gram matrix, we can save computations by computing only one matrix multiplication between the inputs and the scaled frequencies.
 
         Args:
-            params (Dict): A dictionary of parameters for which the Gram matrix should be constructed with.
+            params (Parameters): A dictionary of parameters for which the Gram matrix should be constructed with.
             inputs: A N x D array of inputs.
 
         Returns:

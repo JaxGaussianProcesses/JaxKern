@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax.numpy as jnp
 from jax.random import KeyArray
@@ -22,6 +22,7 @@ from jaxutils import Parameters, Softplus
 
 from ..base import StationaryKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 from .utils import squared_distance
@@ -33,18 +34,19 @@ class RBF(StationaryKernel):
 
     def __init__(
         self,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Radial basis function kernel",
     ) -> None:
         super().__init__(
-            DenseKernelComputation,
+            compute_engine,
             active_dims,
             name=name,
         )
         self._spectral_density = dx.Normal(loc=0.0, scale=1.0)
 
     def __call__(
-        self, params: Dict, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
+        self, params: Parameters, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
     ) -> Float[Array, "1"]:
         """Evaluate the kernel on a pair of inputs :math:`(x, y)` with
         lengthscale parameter :math:`\\ell` and variance :math:`\\sigma^2`
@@ -53,7 +55,7 @@ class RBF(StationaryKernel):
             k(x, y) = \\sigma^2 \\exp \\Bigg( \\frac{\\lVert x - y \\rVert^2_2}{2 \\ell^2} \\Bigg)
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
+            params (Parameters): Parameter set for which the kernel should be evaluated on.
             x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
             y (Float[Array, "1 D"]): The right hand argument of the kernel function's call.
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax.numpy as jnp
 from jax.random import KeyArray
@@ -22,6 +22,7 @@ from jaxutils import Parameters, Softplus
 
 from ..base import AbstractKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 
@@ -32,11 +33,12 @@ class Polynomial(AbstractKernel):
     def __init__(
         self,
         degree: int = 1,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Polynomial",
     ) -> None:
         super().__init__(
-            DenseKernelComputation,
+            compute_engine,
             active_dims,
             name=name,
         )
@@ -45,7 +47,7 @@ class Polynomial(AbstractKernel):
         self._stationary = False
 
     def __call__(
-        self, params: Dict, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
+        self, params: Parameters, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
     ) -> Float[Array, "1"]:
         """Evaluate the kernel on a pair of inputs :math:`(x, y)` with shift parameter :math:`\\alpha` and variance :math:`\\sigma^2` through
 
@@ -53,7 +55,7 @@ class Polynomial(AbstractKernel):
             k(x, y) = \\Big( \\alpha + \\sigma^2 xy \\Big)^{d}
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
+            params (Parameters): Parameter set for which the kernel should be evaluated on.
             x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
             y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
 
