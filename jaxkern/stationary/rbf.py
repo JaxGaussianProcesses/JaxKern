@@ -20,7 +20,7 @@ from jax.random import KeyArray
 from jaxtyping import Array, Float
 from jaxutils import Parameters, Softplus
 
-from ..base import AbstractKernel
+from ..base import StationaryKernel
 from ..computations import (
     DenseKernelComputation,
 )
@@ -28,7 +28,7 @@ from .utils import squared_distance
 import distrax as dx
 
 
-class RBF(AbstractKernel):
+class RBF(StationaryKernel):
     """The Radial Basis Function (RBF) kernel."""
 
     def __init__(
@@ -39,10 +39,9 @@ class RBF(AbstractKernel):
         super().__init__(
             DenseKernelComputation,
             active_dims,
-            spectral_density=dx.Normal(loc=0.0, scale=1.0),
             name=name,
         )
-        self._stationary = True
+        self._spectral_density = dx.Normal(loc=0.0, scale=1.0)
 
     def __call__(
         self, params: Dict, x: Float[Array, "1 D"], y: Float[Array, "1 D"]

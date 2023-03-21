@@ -1,4 +1,4 @@
-from ..base import AbstractKernel
+from ..base import AbstractKernel, StationaryKernel
 from ..computations import BasisFunctionComputation
 from jax.random import KeyArray
 from typing import Any
@@ -66,9 +66,15 @@ class RFF(AbstractKernel):
         Args:
             kernel (AbstractKernel): The kernel to be checked.
         """
-        error_msg = """
-        Base kernel must have a spectral density. Currently, only Matérn
-        and RBF kernels have implemented spectral densities.
-        """
-        if kernel.spectral_density is None:
-            raise ValueError(error_msg)
+        if not isinstance(kernel, StationaryKernel):
+            raise TypeError(
+                f"""Random Fourier Features are only defined for stationary kernels.
+                {kernel.name} is non-stationary."""
+            )
+        else:
+            if kernel.spectral_density is None:
+                error_msg = """
+                Base kernel must have a spectral density. Currently, only Matérn
+                and RBF kernels have implemented spectral densities.
+                """
+                raise ValueError(error_msg)

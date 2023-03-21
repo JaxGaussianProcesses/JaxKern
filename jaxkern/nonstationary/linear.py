@@ -42,7 +42,6 @@ class Linear(AbstractKernel):
         super().__init__(
             DenseKernelComputation,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self._stationary = False

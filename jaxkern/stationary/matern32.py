@@ -20,14 +20,14 @@ from jax.random import KeyArray
 from jaxtyping import Array, Float
 from jaxutils import Parameters, Softplus
 
-from ..base import AbstractKernel
+from ..base import StationaryKernel
 from ..computations import (
     DenseKernelComputation,
 )
 from .utils import euclidean_distance, build_student_t_distribution
 
 
-class Matern32(AbstractKernel):
+class Matern32(StationaryKernel):
     """The Matérn kernel with smoothness parameter fixed at 1.5."""
 
     def __init__(
@@ -35,9 +35,8 @@ class Matern32(AbstractKernel):
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Matern 3/2",
     ) -> None:
-        spectral_density = build_student_t_distribution(nu=3)
-        super().__init__(DenseKernelComputation, active_dims, spectral_density, name)
-        self._stationary = True
+        super().__init__(DenseKernelComputation, active_dims, name)
+        self._spectral_density = build_student_t_distribution(nu=3)
 
     def __call__(
         self,

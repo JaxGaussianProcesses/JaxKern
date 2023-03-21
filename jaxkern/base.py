@@ -14,9 +14,8 @@
 # ==============================================================================
 
 import abc
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, List, Optional, Sequence
 
-import deprecation
 import jax.numpy as jnp
 import jax.random
 import jax
@@ -40,27 +39,20 @@ class AbstractKernel(metaclass=abc.ABCMeta):
         self,
         compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
-        spectral_density: Optional[dx.Distribution] = None,
-        name: Optional[str] = "AbstractKernel",
+        name: Optional[str] = "Abstrac tKernel",
     ) -> None:
         self._compute_engine = compute_engine
         self.active_dims = active_dims
-        self.spectral_density = spectral_density
         self.name = name
-        self._stationary = False
         self.ndims = 1 if not self.active_dims else len(self.active_dims)
         compute_engine = self.compute_engine(kernel_fn=self.__call__)
         self.gram = compute_engine.gram
         self.cross_covariance = compute_engine.cross_covariance
+        self._spectral_density = None
 
     @property
-    def stationary(self) -> bool:
-        """Boolean property as to whether the kernel is stationary or not.
-
-        Returns:
-            bool: True if the kernel is stationary.
-        """
-        return self._stationary
+    def spectral_density(self) -> dx.Distribution:
+        return self._spectral_density
 
     @property
     def compute_engine(self) -> AbstractKernelComputation:
@@ -81,14 +73,14 @@ class AbstractKernel(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __call__(
         self,
-        params: Dict,
+        params: Parameters,
         x: Float[Array, "1 D"],
         y: Float[Array, "1 D"],
     ) -> Float[Array, "1"]:
         """Evaluate the kernel on a pair of inputs.
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
+            params (Parameters): Parameter set for which the kernel should be evaluated on.
             x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
             y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
 
@@ -147,25 +139,11 @@ class AbstractKernel(metaclass=abc.ABCMeta):
                 the kernel's parameters.
 
         Returns:
-            Dict: A dictionary of the kernel's parameters.
+            Parameters: A dictionary of the kernel's parameters.
         """
-        raise NotImplementedError
-
-    @deprecation.deprecated(
-        deprecated_in="0.0.3",
-        removed_in="0.1.0",
-    )
-    def _initialise_params(self, key: KeyArray) -> Dict:
-        """A template dictionary of the kernel's parameter set.
-
-        Args:
-            key (KeyArray): A PRNG key to be used for initialising
-                the kernel's parameters.
-
-        Returns:
-            Dict: A dictionary of the kernel's parameters.
-        """
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"`init_params` not implemented for {self.name} kernel"
+        )
 
 
 class CombinationKernel(AbstractKernel):
@@ -185,8 +163,6 @@ class CombinationKernel(AbstractKernel):
 
         if not all(isinstance(k, AbstractKernel) for k in self.kernel_set):
             raise TypeError("can only combine Kernel instances")  # pragma: no cover
-        if all(k.stationary for k in self.kernel_set):
-            self._stationary = True
         self._set_kernels(self.kernel_set)
 
     def _set_kernels(self, kernels: Sequence[AbstractKernel]) -> None:
@@ -212,14 +188,14 @@ class CombinationKernel(AbstractKernel):
 
     def __call__(
         self,
-        params: Dict,
+        params: Parameters,
         x: Float[Array, "1 D"],
         y: Float[Array, "1 D"],
     ) -> Float[Array, "1"]:
         """Evaluate combination kernel on a pair of inputs.
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
+            params (Parameters): Parameter set for which the kernel should be evaluated on.
             x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
             y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
 
@@ -257,3 +233,19 @@ class ProductKernel(CombinationKernel):
     ) -> None:
         super().__init__(kernel_set, compute_engine, active_dims, name)
         self.combination_fn: Optional[Callable] = jnp.prod
+
+
+class StationaryKernel(AbstractKernel):
+    """
+    Stationary kernels are subclass of kernels that are translation invariant.
+    For a kernel :math:`k(x, y)` to be stationary, it must be a function of
+    :math:k(x, y) = k(x - y)`.
+    """
+
+    def __init__(
+        self,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
+        active_dims: Optional[List[int]] = None,
+        name: Optional[str] = "Stationary Kernel",
+    ) -> None:
+        super().__init__(compute_engine, active_dims, name)

@@ -20,14 +20,14 @@ import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array
 from jaxutils import Parameters, Softplus
-from ..base import AbstractKernel
+from ..base import StationaryKernel
 from ..computations import (
     DenseKernelComputation,
 )
 from .utils import euclidean_distance
 
 
-class PoweredExponential(AbstractKernel):
+class PoweredExponential(StationaryKernel):
     """The powered exponential family of kernels.
 
     Key reference is Diggle and Ribeiro (2007) - "Model-based Geostatistics".
@@ -42,7 +42,6 @@ class PoweredExponential(AbstractKernel):
         super().__init__(
             DenseKernelComputation,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self._stationary = True
