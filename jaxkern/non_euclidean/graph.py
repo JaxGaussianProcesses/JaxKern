@@ -49,7 +49,6 @@ class GraphKernel(AbstractKernel):
         super().__init__(
             EigenKernelComputation,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self.laplacian = laplacian

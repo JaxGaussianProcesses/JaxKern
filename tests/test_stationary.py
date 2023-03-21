@@ -24,7 +24,7 @@ import distrax as dx
 from jax.config import config
 from jaxlinop import LinearOperator, identity
 
-from jaxkern.base import AbstractKernel
+from jaxkern.base import AbstractKernel, StationaryKernel
 from jaxkern.stationary import (
     RBF,
     Matern12,
@@ -70,6 +70,21 @@ def test_gram(kernel: AbstractKernel, dim: int, n: int) -> None:
     Kxx = kernel.gram(params, x)
     assert isinstance(Kxx, LinearOperator)
     assert Kxx.shape == (n, n)
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        RBF(),
+        Matern12(),
+        Matern32(),
+        Matern52(),
+        RationalQuadratic(),
+        White(),
+    ],
+)
+def test_stationarity(kernel: AbstractKernel) -> None:
+    assert isinstance(kernel, StationaryKernel)
 
 
 @pytest.mark.parametrize(

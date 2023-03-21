@@ -21,13 +21,13 @@ from jax.random import KeyArray
 from jaxtyping import Array
 
 from jaxutils import Parameters, Softplus
-from ..base import AbstractKernel
+from ..base import StationaryKernel
 from ..computations import (
     DenseKernelComputation,
 )
 
 
-class Periodic(AbstractKernel):
+class Periodic(StationaryKernel):
     """The periodic kernel.
 
     Key reference is MacKay 1998 - "Introduction to Gaussian processes".
@@ -41,7 +41,6 @@ class Periodic(AbstractKernel):
         super().__init__(
             DenseKernelComputation,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self._stationary = True

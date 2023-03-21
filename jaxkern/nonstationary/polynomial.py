@@ -33,13 +33,11 @@ class Polynomial(AbstractKernel):
         self,
         degree: int = 1,
         active_dims: Optional[List[int]] = None,
-        stationary: Optional[bool] = False,
         name: Optional[str] = "Polynomial",
     ) -> None:
         super().__init__(
             DenseKernelComputation,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self.degree = degree

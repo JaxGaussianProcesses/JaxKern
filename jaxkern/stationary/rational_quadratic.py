@@ -20,14 +20,14 @@ import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array
 from jaxutils import Parameters, Softplus
-from ..base import AbstractKernel
+from ..base import StationaryKernel
 from ..computations import (
     DenseKernelComputation,
 )
 from .utils import squared_distance
 
 
-class RationalQuadratic(AbstractKernel):
+class RationalQuadratic(StationaryKernel):
     def __init__(
         self,
         active_dims: Optional[List[int]] = None,
@@ -36,7 +36,6 @@ class RationalQuadratic(AbstractKernel):
         super().__init__(
             DenseKernelComputation,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self._stationary = True

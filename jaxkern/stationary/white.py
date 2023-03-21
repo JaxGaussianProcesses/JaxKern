@@ -18,22 +18,22 @@ from jax.random import KeyArray
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 from jaxutils import Parameters, Softplus
-from ..base import AbstractKernel
+from ..base import StationaryKernel
 from ..computations import (
     ConstantDiagonalKernelComputation,
     AbstractKernelComputation,
 )
 
 
-class White(AbstractKernel):
+class White(StationaryKernel):
     def __init__(
         self,
         compute_engine: AbstractKernelComputation = ConstantDiagonalKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "White Noise Kernel",
     ) -> None:
-        super().__init__(compute_engine, active_dims, spectral_density=None, name=name)
-        self._stationary = True
+        super().__init__(compute_engine, active_dims, name=name)
+        self._spectral_density = None
 
     def __call__(
         self, params: Dict, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
