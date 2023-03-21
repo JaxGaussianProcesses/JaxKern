@@ -45,7 +45,8 @@ _jitter = 1e-6
 
 
 def test_abstract_kernel():
-    # Test initialising abstract kernel raises TypeError with unimplemented __call__ and _init_params methods:
+    # Test initialising abstract kernel raises TypeError with
+    # unimplemented __call__ and _init_params methods:
     with pytest.raises(TypeError):
         AbstractKernel()
 

@@ -20,7 +20,8 @@ class BasisFunctionComputation(AbstractKernelComputation):
         kernel.
 
         Args:
-            kernel_fn: A. The kernel function for which the compute engine is assigned to.
+            kernel_fn: A. The kernel function for which the compute engine is
+                assigned to.
         """
         super().__init__(kernel_fn)
         self._num_basis_fns = None

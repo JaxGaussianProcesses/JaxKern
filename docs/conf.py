@@ -209,7 +209,9 @@ html_theme_options = {
         "notebook_interface": "jupyterlab",
     },
     "use_repository_button": True,
-    "use_sidenotes": True,  # Turns footnotes into sidenotes - https://sphinx-book-theme.readthedocs.io/en/stable/content-blocks.html
+    # Turns footnotes into sidenotes -
+    # https://sphinx-book-theme.readthedocs.io/en/stable/content-blocks.html
+    "use_sidenotes": True,
 }
 
 always_document_param_types = True
