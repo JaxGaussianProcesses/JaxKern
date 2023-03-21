@@ -48,7 +48,8 @@ class Linear(AbstractKernel):
         self._stationary = False
 
     def __call__(self, params: dict, x: jax.Array, y: jax.Array) -> Array:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with variance parameter :math:`\\sigma`
+        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with variance
+        parameter :math:`\\sigma`
 
         .. math::
             k(x, y) = \\sigma^2 x^{T}y

@@ -59,7 +59,8 @@ class AbstractKernel(metaclass=abc.ABCMeta):
         """The compute engine that is used to perform the kernel computations.
 
         Returns:
-            AbstractKernelComputation: The compute engine that is used to perform the kernel computations.
+            AbstractKernelComputation: The compute engine that is used to perform
+                the kernel computations.
         """
         return self._compute_engine
 
@@ -80,9 +81,12 @@ class AbstractKernel(metaclass=abc.ABCMeta):
         """Evaluate the kernel on a pair of inputs.
 
         Args:
-            params (Parameters): Parameter set for which the kernel should be evaluated on.
-            x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
-            y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
+            params (Parameters): Parameter set for which the kernel should be
+                evaluated on.
+            x (Float[Array, "1 D"]): The left hand argument of the kernel
+                function's call.
+            y (Float[Array, "1 D"]): The right hand argument of the kernel
+                function's call
 
         Returns:
             Float[Array, "1"]: The value of :math:`k(x, y)`.
@@ -90,7 +94,8 @@ class AbstractKernel(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     def slice_input(self, x: Float[Array, "N D"]) -> Float[Array, "N Q"]:
-        """Select the relevant columns of the supplied matrix to be used within the kernel's evaluation.
+        """Select the relevant columns of the supplied matrix to be used within the
+            kernel's evaluation.
 
         Args:
             x (Float[Array, "N D"]): The matrix or vector that is to be sliced.
@@ -195,9 +200,12 @@ class CombinationKernel(AbstractKernel):
         """Evaluate combination kernel on a pair of inputs.
 
         Args:
-            params (Parameters): Parameter set for which the kernel should be evaluated on.
-            x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
-            y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
+            params (Parameters): Parameter set for which the kernel should be
+                evaluated on.
+            x (Float[Array, "1 D"]): The left hand argument of the kernel
+                function's call.
+            y (Float[Array, "1 D"]): The right hand argument of the kernel
+                function's call
 
         Returns:
             Float[Array, "1"]: The value of :math:`k(x, y)`.

@@ -74,7 +74,8 @@ class GraphKernel(AbstractKernel):
         """Evaluate the graph kernel on a pair of vertices :math:`v_i, v_j`.
 
         Args:
-            params (Parameters): Parameter set for which the kernel should be evaluated on.
+            params (Parameters): Parameter set for which the kernel should be
+                evaluated on.
             x (Float[Array, "1 D"]): Index of the ith vertex.
             y (Float[Array, "1 D"]): Index of the jth vertex.
 

@@ -16,7 +16,8 @@ class BasisFunctionComputation(AbstractKernelComputation):
             [Parameters, Float[Array, "1 D"], Float[Array, "1 D"]], Array
         ] = None,
     ) -> None:
-        """Initialise the computation engine for a basis function approximation to a kernel.
+        """Initialise the computation engine for a basis function approximation to a
+        kernel.
 
         Args:
             kernel_fn: A. The kernel function for which the compute engine is assigned to.
@@ -38,7 +39,8 @@ class BasisFunctionComputation(AbstractKernelComputation):
     ) -> Float[Array, "N M"]:
         """For a pair of inputs, compute the cross covariance matrix between the inputs.
         Args:
-            params (Parameters): A dictionary of parameters for which the cross-covariance matrix should be constructed with.
+            params (Parameters): A dictionary of parameters for which the
+                cross-covariance matrix should be constructed with.
             x: A N x D array of inputs.
             y: A M x D array of inputs.
 
@@ -57,14 +59,17 @@ class BasisFunctionComputation(AbstractKernelComputation):
     def gram(
         self, params: Parameters, inputs: Float[Array, "N D"]
     ) -> DenseLinearOperator:
-        """For the Gram matrix, we can save computations by computing only one matrix multiplication between the inputs and the scaled frequencies.
+        """For the Gram matrix, we can save computations by computing only one matrix
+            multiplication between the inputs and the scaled frequencies.
 
         Args:
-            params (Parameters): A dictionary of parameters for which the Gram matrix should be constructed with.
+            params (Parameters): A dictionary of parameters for which the Gram matrix
+                should be constructed with.
             inputs: A N x D array of inputs.
 
         Returns:
-            DenseLinearOperator: A dense linear operator representing the N x N Gram matrix.
+            DenseLinearOperator: A dense linear operator representing the N x N Gram
+                matrix.
         """
         z1 = self.compute_features(
             inputs, params["frequencies"], scaling_factor=params["lengthscale"]

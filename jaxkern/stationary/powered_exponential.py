@@ -49,10 +49,12 @@ class PoweredExponential(StationaryKernel):
         self._stationary = True
 
     def __call__(self, params: dict, x: jax.Array, y: jax.Array) -> Array:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with length-scale parameter :math:`\\ell`, :math:`\\sigma` and power :math:`\\kappa`.
+        r"""Evaluate the kernel on a pair of inputs :math:`(x, y)` with lengthscale
+        parameter :math:`\ell`, :math:`\sigma` and power :math:`\kappa`.
 
         .. math::
-            k(x, y) = \\sigma^2 \\exp \\Bigg( - \\Big( \\frac{\\lVert x - y \\rVert^2}{\\ell^2} \\Big)^\\kappa \\Bigg)
+            k(x, y) = \sigma^2 \exp \Bigg( - \Big(\frac{\lVert x - y \rVert^2}{\ell^2}
+            \Big)^\kappa \Bigg)
 
         Args:
             x (jax.Array): The left hand argument of the kernel function's call.

@@ -43,10 +43,12 @@ class RationalQuadratic(StationaryKernel):
         self._stationary = True
 
     def __call__(self, params: dict, x: jax.Array, y: jax.Array) -> Array:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with length-scale parameter :math:`\\ell` and variance :math:`\\sigma`
+        r"""Evaluate the kernel on a pair of inputs :math:`(x, y)` with lengthscale
+        parameter :math:`\ell` and variance :math:`\sigma`
 
         .. math::
-            k(x, y) = \\sigma^2 \\exp \\Bigg( 1 + \\frac{\\lVert x - y \\rVert^2_2}{2 \\alpha \\ell^2} \\Bigg)
+            k(x, y) = \sigma^2 \exp \Bigg( 1 +
+            \frac{\lVert x - y \rVert^2_2}{2 \alpha \ell^2} \Bigg)
 
         Args:
             x (jax.Array): The left hand argument of the kernel function's call.

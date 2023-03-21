@@ -49,15 +49,19 @@ class Polynomial(AbstractKernel):
     def __call__(
         self, params: Parameters, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
     ) -> Float[Array, "1"]:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with shift parameter :math:`\\alpha` and variance :math:`\\sigma^2` through
+        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with shift
+        parameter :math:`\\alpha` and variance :math:`\\sigma^2` through
 
         .. math::
             k(x, y) = \\Big( \\alpha + \\sigma^2 xy \\Big)^{d}
 
         Args:
-            params (Parameters): Parameter set for which the kernel should be evaluated on.
-            x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
-            y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
+            params (Parameters): Parameter set for which the kernel should be
+                evaluated on.
+            x (Float[Array, "1 D"]): The left hand argument of the kernel
+                function's call.
+            y (Float[Array, "1 D"]): The right hand argument of the kernel
+                function's call
 
         Returns:
             Float[Array, "1"]: The value of :math:`k(x, y)`.

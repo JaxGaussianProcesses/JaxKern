@@ -96,6 +96,7 @@ class ConstantDiagonalKernelComputation(AbstractKernelComputation):
         Returns:
             CovarianceOperator: The computed square Gram matrix.
         """
-        # TODO: This is currently a dense implementation. We should implement a sparse LinearOperator for non-square cross-covariance matrices.
+        # TODO: This is currently a dense implementation. We should implement a sparse
+        # LinearOperator for non-square cross-covariance matrices.
         cross_cov = vmap(lambda x: vmap(lambda y: self.kernel_fn(params, x, y))(y))(x)
         return cross_cov

@@ -28,8 +28,10 @@ class RFF(AbstractKernel):
         """Initialise the Random Fourier Features approximation.
 
         Args:
-            base_kernel (AbstractKernel): The kernel that is to be approximated. This kernel must be stationary.
-            num_basis_fns (int): The number of basis functions that should be used to approximate the kernel.
+            base_kernel (AbstractKernel): The kernel that is to be approximated. This
+                kernel must be stationary.
+            num_basis_fns (int): The number of basis functions that should be used to
+                approximate the kernel.
         """
         self._check_valid_base_kernel(base_kernel)
         self.base_kernel = base_kernel
@@ -46,7 +48,8 @@ class RFF(AbstractKernel):
             key (KeyArray): A pseudo-random number generator key.
 
         Returns:
-            Dict: A dictionary containing the original kernel's parameters and the initial frequencies used in RFF approximation.
+            Dict: A dictionary containing the original kernel's parameters and the
+                initial frequencies used in RFF approximation.
         """
         base_params = self.base_kernel.init_params(key)
         n_dims = self.base_kernel.ndims

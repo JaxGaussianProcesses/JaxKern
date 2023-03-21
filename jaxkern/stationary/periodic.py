@@ -48,10 +48,11 @@ class Periodic(StationaryKernel):
         self._stationary = True
 
     def __call__(self, params: dict, x: jax.Array, y: jax.Array) -> Array:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with length-scale parameter :math:`\\ell` and variance :math:`\\sigma`
+        r"""Evaluate the kernel on a pair of inputs :math:`(x, y)` with lengthscale
+        parameter :math:`\ell` and variance :math:`\sigma`
 
         .. math::
-            k(x, y) = \\sigma^2 \\exp \\Bigg( -0.5 \\sum_{i=1}^{d} \\Bigg)
+            k(x, y) = \sigma^2 \exp \Bigg( -0.5 \sum_{i=1}^{d} \Bigg)
 
         Args:
             x (jax.Array): The left hand argument of the kernel function's call.
