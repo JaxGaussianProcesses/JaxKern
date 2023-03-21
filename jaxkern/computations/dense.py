@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable, Dict
+from typing import Callable
 
 from jax import vmap
 from jaxtyping import Array, Float
 from .base import AbstractKernelComputation
+from jaxutils import Parameters
 
 
 class DenseKernelComputation(AbstractKernelComputation):
@@ -28,13 +29,13 @@ class DenseKernelComputation(AbstractKernelComputation):
     def __init__(
         self,
         kernel_fn: Callable[
-            [Dict, Float[Array, "1 D"], Float[Array, "1 D"]], Array
+            [Parameters, Float[Array, "1 D"], Float[Array, "1 D"]], Array
         ] = None,
     ) -> None:
         super().__init__(kernel_fn)
 
     def cross_covariance(
-        self, params: Dict, x: Float[Array, "N D"], y: Float[Array, "M D"]
+        self, params: Parameters, x: Float[Array, "N D"], y: Float[Array, "M D"]
     ) -> Float[Array, "N M"]:
         """For a given kernel, compute the NxM covariance matrix on a pair of input
         matrices of shape NxD and MxD.
@@ -42,7 +43,7 @@ class DenseKernelComputation(AbstractKernelComputation):
         Args:
             kernel (AbstractKernel): The kernel for which the Gram
                 matrix should be computed for.
-            params (Dict): The kernel's parameter set.
+            params (Parameters): The kernel's parameter set.
             x (Float[Array,"N D"]): The input matrix.
             y (Float[Array,"M D"]): The input matrix.
 

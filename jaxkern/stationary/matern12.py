@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax.numpy as jnp
 from jax.random import KeyArray
@@ -22,6 +22,7 @@ from jaxutils import Parameters, Softplus
 
 from ..base import StationaryKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 from .utils import euclidean_distance, build_student_t_distribution
@@ -32,15 +33,16 @@ class Matern12(StationaryKernel):
 
     def __init__(
         self,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Matérn 1/2 kernel",
     ) -> None:
-        super().__init__(DenseKernelComputation, active_dims, name)
+        super().__init__(compute_engine, active_dims, name)
         self._spectral_density = build_student_t_distribution(1.0)
 
     def __call__(
         self,
-        params: Dict,
+        params: Parameters,
         x: Float[Array, "1 D"],
         y: Float[Array, "1 D"],
     ) -> Float[Array, "1"]:
@@ -51,7 +53,7 @@ class Matern12(StationaryKernel):
             k(x, y) = \\sigma^2 \\exp \\Bigg( -\\frac{\\lvert x-y \\rvert}{2\\ell^2}  \\Bigg)
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
+            params (Parameters): Parameter set for which the kernel should be evaluated on.
             x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
             y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
         Returns:
