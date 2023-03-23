@@ -157,6 +157,7 @@ class CombinationKernel(AbstractKernel):
     def __init__(
         self,
         kernel_set: List[AbstractKernel],
+        combination_fn: Callable,
         compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "AbstractKernel",
@@ -164,23 +165,20 @@ class CombinationKernel(AbstractKernel):
         super().__init__(compute_engine, active_dims, name)
         self.kernel_set = kernel_set
         name: Optional[str] = "Combination kernel"
-        self.combination_fn: Optional[Callable] = None
 
         if not all(isinstance(k, AbstractKernel) for k in self.kernel_set):
             raise TypeError("can only combine Kernel instances")  # pragma: no cover
-        self._set_kernels(self.kernel_set)
-
-    def _set_kernels(self, kernels: Sequence[AbstractKernel]) -> None:
-        """Combine multiple kernels. Based on GPFlow's Combination kernel."""
-        # add kernels to a list, flattening out instances of this class therein
+                # add kernels to a list, flattening out instances of this class therein
         kernels_list: List[AbstractKernel] = []
-        for k in kernels:
+        for k in kernel_set:
             if isinstance(k, self.__class__):
                 kernels_list.extend(k.kernel_set)
             else:
                 kernels_list.append(k)
 
         self.kernel_set = kernels_list
+        self.combination_fn = combination_fn
+
 
     def init_params(self, key: KeyArray) -> Parameters:
         """A template dictionary of the kernel's parameter set."""
@@ -221,12 +219,12 @@ class SumKernel(CombinationKernel):
     def __init__(
         self,
         kernel_set: List[AbstractKernel],
+        combination_fn: Optional[Callable] = jnp.sum,
         compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Sum kernel",
     ) -> None:
-        super().__init__(kernel_set, compute_engine, active_dims, name)
-        self.combination_fn: Optional[Callable] = jnp.sum
+        super().__init__(kernel_set, combination_fn, compute_engine, active_dims, name)
 
 
 class ProductKernel(CombinationKernel):
@@ -235,12 +233,13 @@ class ProductKernel(CombinationKernel):
     def __init__(
         self,
         kernel_set: List[AbstractKernel],
+        combination_fn: Optional[Callable] = jnp.prod,
         compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Product kernel",
     ) -> None:
-        super().__init__(kernel_set, compute_engine, active_dims, name)
-        self.combination_fn: Optional[Callable] = jnp.prod
+        super().__init__(kernel_set, combination_fn, compute_engine, active_dims, name)
+
 
 
 class StationaryKernel(AbstractKernel):
