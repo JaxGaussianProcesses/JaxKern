@@ -13,21 +13,22 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array
-
-from ..base import AbstractKernel
+from jaxutils import Parameters, Softplus
+from ..base import StationaryKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 from .utils import euclidean_distance
 
 
-class PoweredExponential(AbstractKernel):
+class PoweredExponential(StationaryKernel):
     """The powered exponential family of kernels.
 
     Key reference is Diggle and Ribeiro (2007) - "Model-based Geostatistics".
@@ -36,19 +37,24 @@ class PoweredExponential(AbstractKernel):
 
     def __init__(
         self,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Powered exponential",
     ) -> None:
         super().__init__(
-            DenseKernelComputation, active_dims, spectral_density=None, name=name
+            compute_engine,
+            active_dims,
+            name=name,
         )
         self._stationary = True
 
     def __call__(self, params: dict, x: jax.Array, y: jax.Array) -> Array:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with length-scale parameter :math:`\\ell`, :math:`\\sigma` and power :math:`\\kappa`.
+        r"""Evaluate the kernel on a pair of inputs :math:`(x, y)` with lengthscale
+        parameter :math:`\ell`, :math:`\sigma` and power :math:`\kappa`.
 
         .. math::
-            k(x, y) = \\sigma^2 \\exp \\Bigg( - \\Big( \\frac{\\lVert x - y \\rVert^2}{\\ell^2} \\Big)^\\kappa \\Bigg)
+            k(x, y) = \sigma^2 \exp \Bigg( - \Big(\frac{\lVert x - y \rVert^2}{\ell^2}
+            \Big)^\kappa \Bigg)
 
         Args:
             x (jax.Array): The left hand argument of the kernel function's call.
@@ -63,9 +69,13 @@ class PoweredExponential(AbstractKernel):
         K = params["variance"] * jnp.exp(-euclidean_distance(x, y) ** params["power"])
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
-        return {
+    def init_params(self, key: KeyArray) -> Parameters:
+        params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
             "power": jnp.array([1.0]),
         }
+
+        bijectors = {"lengthscale": Softplus, "variance": Softplus, "power": Softplus}
+
+        return Parameters(params, bijectors)

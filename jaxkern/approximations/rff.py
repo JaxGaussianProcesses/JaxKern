@@ -1,7 +1,8 @@
-from ..base import AbstractKernel
+from ..base import AbstractKernel, StationaryKernel
 from ..computations import BasisFunctionComputation
 from jax.random import KeyArray
-from typing import Dict, Any
+from typing import Any
+from jaxutils import Identity, Parameters
 
 
 class RFF(AbstractKernel):
@@ -27,8 +28,10 @@ class RFF(AbstractKernel):
         """Initialise the Random Fourier Features approximation.
 
         Args:
-            base_kernel (AbstractKernel): The kernel that is to be approximated. This kernel must be stationary.
-            num_basis_fns (int): The number of basis functions that should be used to approximate the kernel.
+            base_kernel (AbstractKernel): The kernel that is to be approximated. This
+                kernel must be stationary.
+            num_basis_fns (int): The number of basis functions that should be used to
+                approximate the kernel.
         """
         self._check_valid_base_kernel(base_kernel)
         self.base_kernel = base_kernel
@@ -38,22 +41,24 @@ class RFF(AbstractKernel):
         # Inform the compute engine of the number of basis functions
         self.compute_engine.num_basis_fns = num_basis_fns
 
-    def init_params(self, key: KeyArray) -> Dict:
+    def init_params(self, key: KeyArray) -> Parameters:
         """Initialise the parameters of the RFF approximation.
 
         Args:
             key (KeyArray): A pseudo-random number generator key.
 
         Returns:
-            Dict: A dictionary containing the original kernel's parameters and the initial frequencies used in RFF approximation.
+            Dict: A dictionary containing the original kernel's parameters and the
+                initial frequencies used in RFF approximation.
         """
         base_params = self.base_kernel.init_params(key)
         n_dims = self.base_kernel.ndims
         frequencies = self.base_kernel.spectral_density.sample(
             seed=key, sample_shape=(self.num_basis_fns, n_dims)
         )
-        base_params["frequencies"] = frequencies
-        return base_params
+        base_params.params["frequencies"] = frequencies
+        base_params.bijectors["frequencies"] = Identity
+        return Parameters(base_params.params, base_params.bijectors)
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         pass
@@ -64,9 +69,15 @@ class RFF(AbstractKernel):
         Args:
             kernel (AbstractKernel): The kernel to be checked.
         """
-        error_msg = """
-        Base kernel must have a spectral density. Currently, only Matérn
-        and RBF kernels have implemented spectral densities.
-        """
-        if kernel.spectral_density is None:
-            raise ValueError(error_msg)
+        if not isinstance(kernel, StationaryKernel):
+            raise TypeError(
+                f"""Random Fourier Features are only defined for stationary kernels.
+                {kernel.name} is non-stationary."""
+            )
+        else:
+            if kernel.spectral_density is None:
+                error_msg = """
+                Base kernel must have a spectral density. Currently, only Matérn
+                and RBF kernels have implemented spectral densities.
+                """
+                raise ValueError(error_msg)

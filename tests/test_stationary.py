@@ -23,9 +23,8 @@ import pytest
 import distrax as dx
 from jax.config import config
 from jaxlinop import LinearOperator, identity
-from jaxutils.parameters import initialise
 
-from jaxkern.base import AbstractKernel
+from jaxkern.base import AbstractKernel, StationaryKernel
 from jaxkern.stationary import (
     RBF,
     Matern12,
@@ -58,7 +57,6 @@ _jitter = 1e-6
 @pytest.mark.parametrize("dim", [1, 2, 5])
 @pytest.mark.parametrize("n", [1, 2, 10])
 def test_gram(kernel: AbstractKernel, dim: int, n: int) -> None:
-
     # Gram constructor static method:
     kernel.gram
 
@@ -72,6 +70,21 @@ def test_gram(kernel: AbstractKernel, dim: int, n: int) -> None:
     Kxx = kernel.gram(params, x)
     assert isinstance(Kxx, LinearOperator)
     assert Kxx.shape == (n, n)
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        RBF(),
+        Matern12(),
+        Matern32(),
+        Matern52(),
+        RationalQuadratic(),
+        White(),
+    ],
+)
+def test_stationarity(kernel: AbstractKernel) -> None:
+    assert isinstance(kernel, StationaryKernel)
 
 
 @pytest.mark.parametrize(
@@ -107,7 +120,6 @@ def test_cross_covariance(
 @pytest.mark.parametrize("kernel", [RBF(), Matern12(), Matern32(), Matern52(), White()])
 @pytest.mark.parametrize("dim", [1, 2, 5])
 def test_call(kernel: AbstractKernel, dim: int) -> None:
-
     # Datapoint x and datapoint y:
     x = jnp.array([[1.0] * dim])
     y = jnp.array([[0.5] * dim])
@@ -221,7 +233,6 @@ def test_pos_def_power_exp(
 @pytest.mark.parametrize("kernel", [RBF, Matern12, Matern32, Matern52])
 @pytest.mark.parametrize("dim", [None, 1, 2, 5, 10])
 def test_initialisation(kernel: AbstractKernel, dim: int) -> None:
-
     if dim is None:
         kern = kernel()
         assert kern.ndims == 1
@@ -253,8 +264,8 @@ def test_initialisation(kernel: AbstractKernel, dim: int) -> None:
     ],
 )
 def test_dtype(kernel: AbstractKernel) -> None:
-    parameter_state = initialise(kernel(), _initialise_key)
-    params, *_ = parameter_state.unpack()
+    params = kernel().init_params(_initialise_key)
+    # params, *_ = parameter_state.unpack()
     for k, v in params.items():
         assert v.dtype == jnp.float64
         assert isinstance(k, str)

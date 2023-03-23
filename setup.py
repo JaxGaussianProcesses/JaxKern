@@ -44,6 +44,8 @@ EXTRAS = {
         "networkx",
         "pytest-cov",
         "pytest-xdist",
+        "ruff",
+        "autoflake",
     ],
     "cuda": ["jax[cuda]"],
 }

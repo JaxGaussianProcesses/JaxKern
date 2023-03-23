@@ -13,15 +13,17 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array
+from jaxutils import Parameters, Softplus
 
 from ..base import AbstractKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 
@@ -34,20 +36,20 @@ class Linear(AbstractKernel):
 
     def __init__(
         self,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
-        stationary: Optional[bool] = False,
         name: Optional[str] = "Linear",
     ) -> None:
         super().__init__(
-            DenseKernelComputation,
+            compute_engine,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self._stationary = False
 
     def __call__(self, params: dict, x: jax.Array, y: jax.Array) -> Array:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with variance parameter :math:`\\sigma`
+        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with variance
+        parameter :math:`\\sigma`
 
         .. math::
             k(x, y) = \\sigma^2 x^{T}y
@@ -64,5 +66,13 @@ class Linear(AbstractKernel):
         K = params["variance"] * jnp.matmul(x.T, y)
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
-        return {"variance": jnp.array([1.0])}
+    def init_params(self, key: KeyArray) -> Parameters:
+        params = {
+            "variance": jnp.array([1.0]),
+        }
+
+        bijectors = {
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)

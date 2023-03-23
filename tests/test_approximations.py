@@ -8,6 +8,7 @@ from jaxkern.stationary import (
     RationalQuadratic,
     PoweredExponential,
     Periodic,
+    White,
 )
 from jaxkern.nonstationary import Polynomial, Linear
 from jaxkern.base import AbstractKernel
@@ -142,7 +143,16 @@ def test_exactness(kernel):
 
 @pytest.mark.parametrize(
     "kernel",
-    [RationalQuadratic, PoweredExponential, Polynomial, Linear, Periodic],
+    [Linear, Polynomial],
+)
+def test_type_error(kernel):
+    with pytest.raises(TypeError):
+        RFF(kernel(), num_basis_fns=10)
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [RationalQuadratic, PoweredExponential, White, Periodic],
 )
 def test_value_error(kernel):
     with pytest.raises(ValueError):

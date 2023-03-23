@@ -20,7 +20,6 @@ import jax.random as jr
 import pytest
 from jax.config import config
 from jaxlinop import LinearOperator, identity
-from jaxutils.parameters import initialise
 
 from jaxkern.base import AbstractKernel
 from jaxkern.nonstationary import Linear, Polynomial
@@ -41,7 +40,6 @@ _jitter = 1e-6
 @pytest.mark.parametrize("dim", [1, 2, 5])
 @pytest.mark.parametrize("n", [1, 2, 10])
 def test_gram(kernel: AbstractKernel, dim: int, n: int) -> None:
-
     # Gram constructor static method:
     kernel.gram
 
@@ -114,9 +112,9 @@ def test_pos_def(
     ],
 )
 def test_dtype(kernel: AbstractKernel) -> None:
-    parameter_state = initialise(kernel(), _initialise_key)
-    params, *_ = parameter_state.unpack()
-    for k, v in params.items():
+    parameter_state = kernel().init_params(_initialise_key)
+    params = parameter_state.unpack()
+    for k, v in params["params"].items():
         assert v.dtype == jnp.float64
         assert isinstance(k, str)
 
@@ -129,7 +127,6 @@ def test_dtype(kernel: AbstractKernel) -> None:
 def test_polynomial(
     degree: int, dim: int, variance: float, shift: float, n: int
 ) -> None:
-
     # Define inputs
     x = jnp.linspace(0.0, 1.0, n * dim).reshape(n, dim)
 

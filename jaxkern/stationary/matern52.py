@@ -13,43 +13,47 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array, Float
-
-from ..base import AbstractKernel
-from ..computations import (
-    DenseKernelComputation,
-)
+from jaxutils import Parameters, Softplus
+from ..base import StationaryKernel
+from ..computations import DenseKernelComputation, AbstractKernelComputation
 from .utils import euclidean_distance, build_student_t_distribution
 
 
-class Matern52(AbstractKernel):
+class Matern52(StationaryKernel):
     """The Matérn kernel with smoothness parameter fixed at 2.5."""
 
     def __init__(
         self,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Matern 5/2",
     ) -> None:
-        spectral_density = build_student_t_distribution(nu=5)
-        super().__init__(DenseKernelComputation, active_dims, spectral_density, name)
+        super().__init__(compute_engine, active_dims, name)
+        self._spectral_density = build_student_t_distribution(nu=5)
 
     def __call__(
-        self, params: Dict, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
+        self, params: Parameters, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
     ) -> Float[Array, "1"]:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with
-        lengthscale parameter :math:`\\ell` and variance :math:`\\sigma^2`
+        r"""Evaluate the kernel on a pair of inputs :math:`(x, y)` with
+        lengthscale parameter :math:`\ell` and variance :math:`\sigma^2`
 
         .. math::
-            k(x, y) = \\sigma^2 \\exp \\Bigg(1+ \\frac{\\sqrt{5}\\lvert x-y \\rvert}{\\ell^2} + \\frac{5\\lvert x - y \\rvert^2}{3\\ell^2} \\Bigg)\\exp\\Bigg(-\\frac{\\sqrt{5}\\lvert x-y\\rvert}{\\ell^2} \\Bigg)
+            k(x, y) = \sigma^2 \exp \Bigg(1+ \frac{\sqrt{5}\lvert x-y \rvert}{\ell^2}
+            + \frac{5\lvert x - y \rvert^2}{3\ell^2} \Bigg)\exp
+            \Bigg(-\frac{\sqrt{5}\lvert x-y\rvert}{\ell^2} \Bigg)
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
-            x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
-            y (Float[Array, "1 D"]): The right hand argument of the kernel function's call.
+            params (Parameters): Parameter set for which the kernel should be
+                evaluated on.
+            x (Float[Array, "1 D"]): The left hand argument of the kernel
+                function's call.
+            y (Float[Array, "1 D"]): The right hand argument of the kernel
+                function's call.
 
         Returns:
             Float[Array, "1"]: The value of :math:`k(x, y)`.
@@ -64,8 +68,15 @@ class Matern52(AbstractKernel):
         )
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
-        return {
+    def init_params(self, key: KeyArray) -> Parameters:
+        params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
         }
+
+        bijectors = {
+            "lengthscale": Softplus,
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)

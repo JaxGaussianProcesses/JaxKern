@@ -13,14 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array, Float
+from jaxutils import Parameters, Softplus
 
 from ..base import AbstractKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 
@@ -31,14 +33,13 @@ class Polynomial(AbstractKernel):
     def __init__(
         self,
         degree: int = 1,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
-        stationary: Optional[bool] = False,
         name: Optional[str] = "Polynomial",
     ) -> None:
         super().__init__(
-            DenseKernelComputation,
+            compute_engine,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self.degree = degree
@@ -46,17 +47,21 @@ class Polynomial(AbstractKernel):
         self._stationary = False
 
     def __call__(
-        self, params: Dict, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
+        self, params: Parameters, x: Float[Array, "1 D"], y: Float[Array, "1 D"]
     ) -> Float[Array, "1"]:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with shift parameter :math:`\\alpha` and variance :math:`\\sigma^2` through
+        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with shift
+        parameter :math:`\\alpha` and variance :math:`\\sigma^2` through
 
         .. math::
             k(x, y) = \\Big( \\alpha + \\sigma^2 xy \\Big)^{d}
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
-            x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
-            y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
+            params (Parameters): Parameter set for which the kernel should be
+                evaluated on.
+            x (Float[Array, "1 D"]): The left hand argument of the kernel
+                function's call.
+            y (Float[Array, "1 D"]): The right hand argument of the kernel
+                function's call
 
         Returns:
             Float[Array, "1"]: The value of :math:`k(x, y)`.
@@ -66,8 +71,15 @@ class Polynomial(AbstractKernel):
         K = jnp.power(params["shift"] + jnp.dot(x * params["variance"], y), self.degree)
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
-        return {
+    def init_params(self, key: KeyArray) -> Parameters:
+        params = {
             "shift": jnp.array([1.0]),
             "variance": jnp.array([1.0] * self.ndims),
         }
+
+        bijectors = {
+            "shift": Softplus,
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)

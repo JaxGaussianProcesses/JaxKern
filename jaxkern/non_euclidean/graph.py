@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array, Float
 
-from ..computations import EigenKernelComputation
+from jaxutils import Parameters, Softplus
+from ..computations import EigenKernelComputation, AbstractKernelComputation
 from ..base import AbstractKernel
 from .utils import jax_gather_nd
 
@@ -28,27 +29,32 @@ from .utils import jax_gather_nd
 # Graph kernels
 ##########################################
 class GraphKernel(AbstractKernel):
-    """A Matérn graph kernel defined on the vertices of a graph. The key reference for this object is borovitskiy et. al., (2020)."""
+    """A Matérn graph kernel defined on the vertices of a graph. The key reference for
+    this object is borovitskiy et. al., (2020)."""
 
     def __init__(
         self,
         laplacian: Float[Array, "N N"],
+        compute_engine: AbstractKernelComputation = EigenKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Matérn Graph kernel",
     ) -> None:
         """Initialize a Matérn graph kernel.
 
         Args:
-            laplacian (Float[Array]): An N x N matrix representing the Laplacian matrix of a graph.
-            compute_engine (EigenKernelComputation, optional): The compute engine that should be used in the kernel to compute covariance matrices. Defaults to EigenKernelComputation.
-            active_dims (Optional[List[int]], optional): The dimensions of the input data for which the kernel should be evaluated on. Defaults to None.
+            laplacian (Float[Array]): An N x N matrix representing the Laplacian
+                matrix of a graph.
+            compute_engine (EigenKernelComputation, optional): The compute engine that
+                should be used in the kernel to compute covariance matrices.
+                Defaults to EigenKernelComputation.
+            active_dims (Optional[List[int]], optional): The dimensions of the input
+                data for which the kernel should be evaluated on. Defaults to None.
             stationary (Optional[bool], optional): _description_. Defaults to False.
             name (Optional[str], optional): _description_. Defaults to "Graph kernel".
         """
         super().__init__(
-            EigenKernelComputation,
+            compute_engine,
             active_dims,
-            spectral_density=None,
             name=name,
         )
         self.laplacian = laplacian
@@ -60,7 +66,7 @@ class GraphKernel(AbstractKernel):
 
     def __call__(
         self,
-        params: Dict,
+        params: Parameters,
         x: Float[Array, "1 D"],
         y: Float[Array, "1 D"],
         **kwargs,
@@ -68,7 +74,8 @@ class GraphKernel(AbstractKernel):
         """Evaluate the graph kernel on a pair of vertices :math:`v_i, v_j`.
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
+            params (Parameters): Parameter set for which the kernel should be
+                evaluated on.
             x (Float[Array, "1 D"]): Index of the ith vertex.
             y (Float[Array, "1 D"]): Index of the jth vertex.
 
@@ -81,14 +88,6 @@ class GraphKernel(AbstractKernel):
         )  # shape (n,n)
         return Kxx.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
-        """Initialise the lengthscale, variance and smoothness parameters of the kernel"""
-        return {
-            "lengthscale": jnp.array([1.0] * self.ndims),
-            "variance": jnp.array([1.0]),
-            "smoothness": jnp.array([1.0]),
-        }
-
     @property
     def num_vertex(self) -> int:
         """The number of vertices within the graph.
@@ -97,3 +96,18 @@ class GraphKernel(AbstractKernel):
             int: An integer representing the number of vertices within the graph.
         """
         return self.compute_engine.num_vertex
+
+    def init_params(self, key: KeyArray) -> Parameters:
+        params = {
+            "lengthscale": jnp.array([1.0] * self.ndims),
+            "variance": jnp.array([1.0]),
+            "smoothness": jnp.array([1.0]),
+        }
+
+        bijectors = {
+            "lengthscale": Softplus,
+            "variance": Softplus,
+            "smoothness": Softplus,
+        }
+
+        return Parameters(params, bijectors)

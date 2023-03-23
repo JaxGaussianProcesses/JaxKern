@@ -13,47 +13,52 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jax.numpy as jnp
 from jax.random import KeyArray
 from jaxtyping import Array, Float
+from jaxutils import Parameters, Softplus
 
-from ..base import AbstractKernel
+from ..base import StationaryKernel
 from ..computations import (
+    AbstractKernelComputation,
     DenseKernelComputation,
 )
 from .utils import euclidean_distance, build_student_t_distribution
 
 
-class Matern12(AbstractKernel):
+class Matern12(StationaryKernel):
     """The Matérn kernel with smoothness parameter fixed at 0.5."""
 
     def __init__(
         self,
+        compute_engine: AbstractKernelComputation = DenseKernelComputation,
         active_dims: Optional[List[int]] = None,
         name: Optional[str] = "Matérn 1/2 kernel",
     ) -> None:
-        spectral_density = build_student_t_distribution(nu=1)
-        super().__init__(DenseKernelComputation, active_dims, spectral_density, name)
-        self._stationary = True
+        super().__init__(compute_engine, active_dims, name)
+        self._spectral_density = build_student_t_distribution(1.0)
 
     def __call__(
         self,
-        params: Dict,
+        params: Parameters,
         x: Float[Array, "1 D"],
         y: Float[Array, "1 D"],
     ) -> Float[Array, "1"]:
-        """Evaluate the kernel on a pair of inputs :math:`(x, y)` with
+        r"""Evaluate the kernel on a pair of inputs :math:`(x, y)` with
         lengthscale parameter :math:`\\ell` and variance :math:`\\sigma^2`
 
         .. math::
-            k(x, y) = \\sigma^2 \\exp \\Bigg( -\\frac{\\lvert x-y \\rvert}{2\\ell^2}  \\Bigg)
+            k(x, y)=\sigma^2 \exp \Bigg( -\frac{\lvert x-y \rvert}{2\ell^2}\Bigg)
 
         Args:
-            params (Dict): Parameter set for which the kernel should be evaluated on.
-            x (Float[Array, "1 D"]): The left hand argument of the kernel function's call.
-            y (Float[Array, "1 D"]): The right hand argument of the kernel function's call
+            params (Parameters): Parameter set for which the kernel should be
+                evaluated on.
+            x (Float[Array, "1 D"]): The left hand argument of the kernel
+                function's call.
+            y (Float[Array, "1 D"]): The right hand argument of the kernel
+                function's call
         Returns:
             Float[Array, "1"]: The value of :math:`k(x, y)`
         """
@@ -62,8 +67,15 @@ class Matern12(AbstractKernel):
         K = params["variance"] * jnp.exp(-euclidean_distance(x, y))
         return K.squeeze()
 
-    def init_params(self, key: KeyArray) -> Dict:
-        return {
+    def init_params(self, key: KeyArray) -> Parameters:
+        params = {
             "lengthscale": jnp.array([1.0] * self.ndims),
             "variance": jnp.array([1.0]),
         }
+
+        bijectors = {
+            "lengthscale": Softplus,
+            "variance": Softplus,
+        }
+
+        return Parameters(params, bijectors)

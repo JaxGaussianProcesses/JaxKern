@@ -1,4 +1,9 @@
 repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.254'
+    hooks:
+      - id: ruff
+        args: ['--fix']
   - repo: local
     hooks:
       - id: check-toml
@@ -30,6 +35,6 @@ repos:
           - "--remove-all-unused-imports"
           - "--remove-unused-variables"
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 23.1.0
     hooks:
       - id: black
